@@ -6,7 +6,7 @@ import text_style as ts
 
 """
 chsec [sec] sections are fixed. They could change by devs.
-sec: todo-list
+module: todo-list
     adddir [dir]
     rmdir [dir]
     chdir [section]
