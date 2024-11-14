@@ -1,20 +1,32 @@
 import os 
 from dotenv import load_dotenv
-from discord import Intents, Client, Message, Interaction, app_commands
+from discord import Intents, Client, Message, Interaction
+import discord.app_commands as ac
 import text_style as ts
-# from appdirs import user_data_dir
+
+"""
+chsec [sec] sections are fixed. They could change by devs.
+sec: todo-list
+    adddir [dir]
+    rmdir [dir]
+    chdir [section]
+    add [todo]
+    rm  [todo]
+
+sec: music
+    play [music name]
+"""
 
 load_dotenv()
-
-TOKEN = str(os.getenv("DISCORD_TOKEN"))
+TOKEN: str = str(os.getenv("DISCORD_TOKEN"))
 
 intents: Intents = Intents.default()
 intents.message_content = True
-
-folder_path = os.path.join("users")
 client: Client = Client(intents=intents)
 
-tree = app_commands.CommandTree(client)
+folder_path: str = os.path.join("users")
+
+tree: ac.CommandTree = ac.CommandTree(client)
 
 @tree.command(name="fontstyles", description="this will show some font styles")
 async def fontstyles(interaction: Interaction) -> None:
