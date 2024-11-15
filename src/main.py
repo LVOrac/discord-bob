@@ -1,20 +1,21 @@
 import os 
 from dotenv import load_dotenv
 from discord import Intents, Client, Message, Interaction
+import discord
+from discord.ui import Select, View
 import discord.app_commands as ac
 import text_style as ts
 
 """
-chsec [sec] sections are fixed. They could change by devs.
-module: todo-list
+todo:
     adddir [dir]
     rmdir [dir]
     chdir [section]
     add [todo]
     rm  [todo]
 
-sec: music
-    play [music name]
+play:
+    music [music name]
 """
 
 load_dotenv()
@@ -27,6 +28,22 @@ client: Client = Client(intents=intents)
 folder_path: str = os.path.join("users")
 
 tree: ac.CommandTree = ac.CommandTree(client)
+
+class TodoList(ac.Group):
+    def __init__(self):
+        super().__init__(name="todo", description="todo commands")
+
+    @ac.command(name="addlist", description="add a new todo-list")
+    @ac.describe(todo_list="list name")
+    async def addlist(self, interaction: Interaction, todo_list: str):
+        await interaction.response.send_message("add new list - " + todo_list)
+
+    @ac.command(name="add", description="add task")
+    @ac.describe(task="task name")
+    async def add(self, interaction: Interaction, task: str):
+        await interaction.response.send_message("add a new task - " + task)
+
+tree.add_command(TodoList())
 
 @tree.command(name="fontstyles", description="this will show some font styles")
 async def fontstyles(interaction: Interaction) -> None:
@@ -47,7 +64,7 @@ async def init_todo(interaction: Interaction) -> None:
 
 @client.event
 async def on_ready() -> None:
-    await tree.sync(guild=None) # you need to restart discord if there is a new command which needs to be updated.
+    await tree.sync(guild=None) # you may need to restart discord if there is a new command which needs to be updated.
     os.makedirs(folder_path, exist_ok=True)
     print(f"{client.user} is ready")
 
