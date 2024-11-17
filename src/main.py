@@ -10,7 +10,12 @@ play:
     music [music name]
 """
 
-from bot_setup import *
+import os
+
+folder_path: str = os.path.join("users")
+os.chdir(folder_path)
+
+from bot_setup import client, TOKEN
 from discord import Message, Interaction
 import discord.app_commands as ac
 import text_style as ts
@@ -18,7 +23,6 @@ import text_style as ts
 from todo_commands import TodoCommands
 
 tree: ac.CommandTree = ac.CommandTree(client)
-
 tree.add_command(TodoCommands())
 
 @tree.command(name="fontstyles", description="this will show some font styles")

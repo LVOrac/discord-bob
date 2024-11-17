@@ -8,5 +8,3 @@ TOKEN: str = str(os.getenv("DISCORD_TOKEN"))
 intents: Intents = Intents.default()
 intents.message_content = True
 client: Client = Client(intents=intents)
-
-folder_path: str = os.path.join("users")
