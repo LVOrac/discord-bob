@@ -1,11 +1,3 @@
-import os 
-from dotenv import load_dotenv
-from discord import Intents, Client, Message, Interaction
-import discord
-from discord.ui import Select, View
-import discord.app_commands as ac
-import text_style as ts
-
 """
 todo:
     adddir [dir]
@@ -18,32 +10,16 @@ play:
     music [music name]
 """
 
-load_dotenv()
-TOKEN: str = str(os.getenv("DISCORD_TOKEN"))
+from bot_setup import *
+from discord import Message, Interaction
+import discord.app_commands as ac
+import text_style as ts
 
-intents: Intents = Intents.default()
-intents.message_content = True
-client: Client = Client(intents=intents)
-
-folder_path: str = os.path.join("users")
+from todo_commands import TodoCommands
 
 tree: ac.CommandTree = ac.CommandTree(client)
 
-class TodoList(ac.Group):
-    def __init__(self):
-        super().__init__(name="todo", description="todo commands")
-
-    @ac.command(name="addlist", description="add a new todo-list")
-    @ac.describe(todo_list="list name")
-    async def addlist(self, interaction: Interaction, todo_list: str):
-        await interaction.response.send_message("add new list - " + todo_list)
-
-    @ac.command(name="add", description="add task")
-    @ac.describe(task="task name")
-    async def add(self, interaction: Interaction, task: str):
-        await interaction.response.send_message("add a new task - " + task)
-
-tree.add_command(TodoList())
+tree.add_command(TodoCommands())
 
 @tree.command(name="fontstyles", description="this will show some font styles")
 async def fontstyles(interaction: Interaction) -> None:
