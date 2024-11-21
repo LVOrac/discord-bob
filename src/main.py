@@ -1,4 +1,5 @@
 """
+make a command to request the score in deanza
 todo:
     adddir [dir]
     rmdir [dir]
@@ -15,15 +16,14 @@ import os
 folder_path: str = os.path.join("users")
 os.chdir(folder_path)
 
-from bot_setup import client, TOKEN
+from bot_setup import client, TOKEN, tree
 from discord import Message, Interaction
-import discord.app_commands as ac
 import text_style as ts
 
 from todo_commands import TodoCommands
-
-tree: ac.CommandTree = ac.CommandTree(client)
 tree.add_command(TodoCommands())
+
+from user import initialized_user, init_user
 
 @tree.command(name="fontstyles", description="this will show some font styles")
 async def fontstyles(interaction: Interaction) -> None:
@@ -33,19 +33,17 @@ async def fontstyles(interaction: Interaction) -> None:
     await interaction.response.send_message(out)
 
 @tree.command(name="init", description="this will generate an init folder")
-async def init_todo(interaction: Interaction) -> None:
-    user_data_path = os.path.join("users", str(interaction.user.id))
-    if os.path.exists(user_data_path):
-        await interaction.response.send_message(str(interaction.user.id) + ": already exists!")
+async def init(interaction: Interaction) -> None:
+    path = initialized_user(interaction)
+    if not path:
+        init_user(interaction)
+        await interaction.response.send_message(str(interaction.user.id) + ": init complete!")
         return
-        
-    os.makedirs(user_data_path, exist_ok=True)
-    await interaction.response.send_message(str(interaction.user.id) + ": init complete!")
+    await interaction.response.send_message(str(interaction.user.id) + ": already exists!")
 
 @client.event
 async def on_ready() -> None:
     await tree.sync(guild=None) # you may need to restart discord if there is a new command which needs to be updated.
-    os.makedirs(folder_path, exist_ok=True)
     print(f"{client.user} is ready")
 
 @client.event
