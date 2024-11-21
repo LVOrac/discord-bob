@@ -1,3 +1,4 @@
 .env
 .output
 users/**
+src/__pycache__
