@@ -1,11 +1,13 @@
 import os
 import json
-from discord import app_commands
 from discord import Interaction
 from typing import Optional
+from discord.app_commands import Group, Choice, command, describe, choices
 from text_style import Style, format
 
 def read_todo(id: int):
+    if not os.path.exists(str(id)):
+        return None
     todo_path: str = os.path.join(str(id), "todolist.json")
     if not os.path.exists(todo_path):
         with open(todo_path, 'w') as f:
@@ -18,14 +20,14 @@ def update_todo(id: int, todo: str) -> None:
     with open(todo_path, 'w') as f:
         f.write(todo)
 
-class TodoCommands(app_commands.Group):
+class TodoCommands(Group):
     def __init__(self):
         super().__init__(name="todo", description="todo commands")
 
     status = [
-        app_commands.Choice(name="Done", value="Done"),
-        app_commands.Choice(name="In Progress", value="In progress"),
-        app_commands.Choice(name="Missing", value="Missing"),
+        Choice(name="Done", value="Done"),
+        Choice(name="In Progress", value="In progress"),
+        Choice(name="Missing", value="Missing"),
     ]
 
     status_char = {
@@ -35,25 +37,31 @@ class TodoCommands(app_commands.Group):
     }
 
     lifetime = [
-        app_commands.Choice(name="Once", value="once"),
-        app_commands.Choice(name="Daily", value="daily"),
+        Choice(name="Once", value="once"),
+        Choice(name="Daily", value="daily"),
     ]
 
-    @app_commands.command(name="add", description="add task")
-    @app_commands.describe(name="task name")
-    @app_commands.choices(lifetime=lifetime)
-    async def add(self, interaction: Interaction, name: str, lifetime: Optional[app_commands.Choice[str]]) -> None:
+    @command(name="add", description="add task")
+    @describe(name="task name")
+    @choices(lifetime=lifetime)
+    async def add(self, interaction: Interaction, name: str, lifetime: Optional[Choice[str]]) -> None:
         if lifetime is None:
             lifetime = self.lifetime[0] 
         todo = read_todo(interaction.user.id)
+        if todo == None:
+            await interaction.response.send_message("please use /init to initialize")
+            return
         todo.append([name, lifetime.name, self.status[2].name])
         update_todo(interaction.user.id, json.dumps(todo))
         await interaction.response.send_message("todo - add a new task " + name)
 
-    @app_commands.command(name="show", description="show task")
-    @app_commands.choices(lifetime=lifetime)
-    async def show(self, interaction: Interaction, lifetime: Optional[app_commands.Choice[str]]) -> None:
+    @command(name="show", description="show task")
+    @choices(lifetime=lifetime)
+    async def show(self, interaction: Interaction, lifetime: Optional[Choice[str]]) -> None:
         todo = read_todo(interaction.user.id)
+        if todo == None:
+            await interaction.response.send_message("please use /init to initialize")
+            return
         result: str = "todo list:\n"
         if len(todo) != 0:
             for i in range(len(todo)):
@@ -86,12 +94,12 @@ class TodoCommands(app_commands.Group):
                 return f"todo - set name {iden} to {status.name}"
         return f"todo - not find name {iden}"
 
-    @app_commands.command(name="set", description="set task status")
-    @app_commands.describe(iden="task id / name")
-    @app_commands.describe(status="status")
-    @app_commands.choices(status=status)
-    @app_commands.choices(lifetime=lifetime)
-    async def set(self, interaction: Interaction, iden: str, status: Optional[app_commands.Choice[str]], lifetime: Optional[app_commands.Choice[str]]) -> None:
+    @command(name="set", description="set task status")
+    @describe(iden="task id / name")
+    @describe(status="status")
+    @choices(status=status)
+    @choices(lifetime=lifetime)
+    async def set(self, interaction: Interaction, iden: str, status: Optional[Choice[str]], lifetime: Optional[Choice[str]]) -> None:
         if status is None and lifetime is None: 
             await interaction.response.send_message("todo - obviously you did nothing")
             return
@@ -105,10 +113,13 @@ class TodoCommands(app_commands.Group):
         response = f"todo - set {iden} {"" if not status else status.name} {"" if not lifetime else lifetime.name}"
         await interaction.response.send_message(response)
 
-    @app_commands.command(name="del", description="del a task")
-    @app_commands.describe(iden="task id / name")
+    @command(name="del", description="del a task")
+    @describe(iden="task id / name")
     async def delete(self, interaction: Interaction, iden: str) -> None:
         todo = read_todo(interaction.user.id)
+        if todo == None:
+            await interaction.response.send_message("please use /init to initialize")
+            return
         list_len = len(todo)
         if list_len == 0:
             await interaction.response.send_message("todo - here is no task")
