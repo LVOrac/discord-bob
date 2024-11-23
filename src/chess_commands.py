@@ -1,8 +1,7 @@
 import os
-import json
 from discord import Interaction, File
 from typing import Optional
-from discord.app_commands import Group, Choice, command, describe, choices
+from discord.app_commands import Group, Choice, command, choices
 from text_style import Style, format
 
 import chess
@@ -33,6 +32,15 @@ def save_board_image(id: int, board, flipped=False) -> None:
     with open(image_path, "wb") as f:
         cairosvg.svg2png(bytestring=svg_image.encode('utf-8'), write_to=f, dpi=300)
 
+def AI_move(board: chess.Board) -> chess.Move | None:
+    engine = chess.engine.SimpleEngine.popen_uci("../lib/stockfish")
+    result = engine.analyse(board, chess.engine.Limit(time=0.7))
+    best_move = None
+    if result != None:
+        best_move = result.get("pv")[0] # TODO: choice some random move
+    engine.close()
+    return best_move
+
 class ChessCommands(Group):
     def __init__(self):
         super().__init__(name="chess", description="chess commands")
@@ -45,16 +53,30 @@ class ChessCommands(Group):
     @command(name='new', description='start a new chess game')
     @choices(start_with=start_with)
     async def new(self, interaction: Interaction, start_with: Optional[Choice[str]]) -> None:
-        if start_with == None:
-            start_with = self.start_with[0]
-
         if os.path.exists(str(id)) == None:
             await interaction.response.send_message("please use /init to initialize")
             return
 
+        if start_with == None:
+            start_with = self.start_with[0]
+
         board = chess.Board()
+        if start_with.name == "White":
+            save_board(interaction.user.id, board)
+            save_board_image(interaction.user.id, board)
+            await interaction.response.send_message(file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
+            return
+
+        best_move = AI_move(board)
+
+        if best_move == None:
+            await interaction.response.send_message("chess - ai has no move")
+            return
+
+        board.push(best_move)
+
         save_board(interaction.user.id, board)
-        save_board_image(interaction.user.id, board, flipped=start_with.name == "Black")
+        save_board_image(interaction.user.id, board, flipped = True)
         await interaction.response.send_message(file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
     
 
@@ -73,15 +95,15 @@ class ChessCommands(Group):
             await interaction.response.send_message(f"chess - invalid move {move}")
             return
 
-        engine = chess.engine.SimpleEngine.popen_uci("../lib/stockfish")
-        result = engine.analyse(board, chess.engine.Limit(time=0.7))
-        if result == None:
+        best_move = AI_move(board)
+
+        if best_move == None:
+            await interaction.response.send_message("chess - ai has no move")
             return
-        best_move = result.get("pv")[0] # TODO: choice some random move
+
         board.push(best_move)
-        engine.close()
 
         save_board(interaction.user.id, board)
         save_board_image(interaction.user.id, board, flipped=flipped)
-        await interaction.response.send_message(format(f"ai move {best_move}", header="###"), file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
+        await interaction.response.send_message(format(f"chess - {best_move}", header="###"), file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
 
