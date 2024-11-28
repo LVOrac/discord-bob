@@ -5,6 +5,7 @@ from typing import Optional
 from discord.app_commands import Group, Choice, describe, command, choices
 from text_style import format, Style
 import requests
+from user import load_json, user_initialized
 
 import chess
 from chess.engine import SimpleEngine, Limit
@@ -70,8 +71,8 @@ class ChessCommands(Group):
     @describe(depth="stockfish depths")
     @describe(response_time="stockfish response time")
     async def new(self, interaction: Interaction, start_with: Optional[Choice[str]], level: Optional[int], depth: Optional[int], response_time: Optional[float]) -> None:
-        if os.path.exists(str(id)) == None:
-            await interaction.response.send_message("please use /init to initialize")
+        if msg := user_initialized(interaction.user.id):
+            await interaction.response.send_message(msg)
             return
 
         if start_with == None:
@@ -104,6 +105,10 @@ class ChessCommands(Group):
     
     @command(name='move', description='move pieces')
     async def move(self, interaction: Interaction, move: str) -> None:
+        if msg := user_initialized(interaction.user.id):
+            await interaction.response.send_message(msg)
+            return
+
         board = load_board(interaction.user.id)
         if board == None:
             await interaction.response.send_message("chess - Please use /chess new to make a new game")
@@ -143,8 +148,8 @@ class ChessCommands(Group):
 
     @command(name='analyze', description='analyze the current game')
     async def analyze(self, interaction: Interaction) -> None:
-        if os.path.exists(str(id)) == None:
-            await interaction.response.send_message("please use /init to initialize")
+        if msg := user_initialized(interaction.user.id):
+            await interaction.response.send_message(msg)
             return
 
         board = load_board(interaction.user.id)
@@ -157,7 +162,7 @@ class ChessCommands(Group):
             fen = f.read()
             response = requests.get(f"https://explorer.lichess.ovh/masters?fen={fen}&since=2000&topGames=5&moves=5")
             tops = json.loads(response.text)["moves"]
-            result = format("⠀moves  white draws black\n", header="###")
+            result = format("⠀moves⠀⠀white⠀⠀draws⠀⠀black\n", header="###")
             for top in tops:
                 white = top["white"]
                 draws = top["draws"]
