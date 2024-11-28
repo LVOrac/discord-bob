@@ -5,7 +5,7 @@ from typing import Optional
 from discord.app_commands import Group, Choice, describe, command, choices
 from text_style import format, Style
 import requests
-from user import load_json, user_initialized
+from user import user_initialized
 
 import chess
 from chess.engine import SimpleEngine, Limit
