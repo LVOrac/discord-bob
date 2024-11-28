@@ -3,7 +3,8 @@ import json
 from discord import Interaction, File
 from typing import Optional
 from discord.app_commands import Group, Choice, describe, command, choices
-from text_style import format
+from text_style import format, Style
+import requests
 
 import chess
 from chess.engine import SimpleEngine, Limit
@@ -140,3 +141,32 @@ class ChessCommands(Group):
         save_board_image(interaction.user.id, board, flipped=flipped)
         await interaction.response.send_message(format(f"chess - {best_move}", header="###"), file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
 
+    @command(name='analyze', description='analyze the current game')
+    async def analyze(self, interaction: Interaction) -> None:
+        if os.path.exists(str(id)) == None:
+            await interaction.response.send_message("please use /init to initialize")
+            return
+
+        board = load_board(interaction.user.id)
+        if board == None:
+            await interaction.response.send_message("chess - Please use /chess new to make a new game")
+            return
+
+        board_fen: str = os.path.join(str(interaction.user.id), "board.fen")
+        with open(board_fen, 'r') as f:
+            fen = f.read()
+            response = requests.get(f"https://explorer.lichess.ovh/masters?fen={fen}&since=2000&topGames=5&moves=5")
+            tops = json.loads(response.text)["moves"]
+            result = format("⠀moves  white draws black\n", header="###")
+            for top in tops:
+                white = top["white"]
+                draws = top["draws"]
+                black = top["black"]
+                rtotal = 1.0 / (white + black + draws)
+                white *= rtotal
+                draws *= rtotal
+                black *= rtotal
+
+                blocks = 20
+                result += format(f"{top["uci"]:^5} [{'█' * int(blocks * white)}{'▒' * int(blocks * draws)}{'░' * int(blocks * black)}]\n", style=Style.BulletedList)
+            await interaction.response.send_message(result)
