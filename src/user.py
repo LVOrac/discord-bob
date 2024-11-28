@@ -3,6 +3,11 @@ import shutil
 import json
 from discord import Interaction
 
+def user_initialized(id: int):
+    if not os.path.exists(str(id)):
+        return "please use /init to initialize"
+    return None
+
 def load_json(id: int, name: str):
     path: str = os.path.join(str(id), name)
     if not os.path.exists(path):
