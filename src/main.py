@@ -33,9 +33,11 @@ tree: CommandTree = CommandTree(client)
 from todo_commands import TodoCommands
 from chess_commands import ChessCommands
 from user import init, delete
+from weather_commands import WeatherCommands
 
 tree.add_command(TodoCommands())
 tree.add_command(ChessCommands())
+tree.add_command(WeatherCommands())
 tree.add_command(Command(name="init", description="initialize user", callback=init))
 tree.add_command(Command(name="del", description="delete user", callback=delete))
 
