@@ -1,6 +1,15 @@
 import os
 import shutil
+import json
 from discord import Interaction
+
+def load_json(id: int, name: str):
+    path: str = os.path.join(str(id), name)
+    if not os.path.exists(path):
+        return None
+
+    with open(path, 'r') as f:
+        return json.load(f)
 
 def initialized_user(interaction: Interaction) -> str | None:
     user_folder = str(interaction.user.id)
