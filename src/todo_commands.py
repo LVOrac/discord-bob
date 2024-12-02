@@ -4,8 +4,7 @@ from discord import Interaction
 from typing import Optional
 from discord.app_commands import Group, Choice, command, describe, choices
 from text_style import Style, format
-from datetime import datetime
-from user import load_json, user_initialized
+from user import load_json, user_initialized, update_today_is_today
 
 class TodoCommands(Group):
     status = [
@@ -28,7 +27,7 @@ class TodoCommands(Group):
     def set_todo_default(self, id: int):
         todo_path: str = os.path.join(str(id), "todolist.json")
         with open(todo_path, 'w') as f:
-            f.write(f"[\"{datetime.now().date()}\"]")
+            f.write(f"[]")
 
     def read_todo(self, id: int):
         return load_json(id, "todolist.json")
@@ -39,16 +38,14 @@ class TodoCommands(Group):
             f.write(json.dumps(todo))
 
     def update_lifetime(self, id: int, todo):
-        date = datetime.strptime(todo[0], '%Y-%m-%d').date()
-        current_date = datetime.now().date()
-        if date == current_date:
+        if not update_today_is_today(id):
             return
-        for i in range(len(todo) - 1, 0, -1):
+
+        for i in range(len(todo) - 1, -1, -1):
             if todo[i][1] == "Once":
                 todo.pop(i)
                 continue
             todo[i][2] = self.status[2].name;
-        todo[0] = str(current_date)
         self.update_todo(id, todo)
 
     def __init__(self):
@@ -88,9 +85,9 @@ class TodoCommands(Group):
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
         result: str = "todo list:\n"
-        if len(todo) != 1:
+        if len(todo) != 0:
             self.update_lifetime(interaction.user.id, todo)
-            for i in range(1, len(todo)):
+            for i in range(len(todo)):
                 if lifetime:
                     if lifetime.name == todo[i][1]:
                         result += format(f"{i} - {todo[i][0]} {self.status_char[todo[i][2]]}\n", style=Style.BulletedList)
@@ -102,18 +99,18 @@ class TodoCommands(Group):
 
     def set_status(self, user_id, todo, iden, status) -> str:
         list_len = len(todo)
-        if list_len == 1:
+        if list_len == 0:
             return "here is no item. You can use /todo add."
         if iden.isdigit():
             id = int(iden)
-            if list_len <= id or id < 1:
+            if list_len <= id or id < 0:
                 return f"todo - index {id} is invalid"
 
             todo[id][2] = status.name
             self.update_todo(user_id, todo)
             return ""
 
-        for i in range(1, list_len):
+        for i in range(list_len):
             if iden == todo[i][0]:
                 todo[i][2] = status.name
                 self.update_todo(user_id, todo)
@@ -122,18 +119,18 @@ class TodoCommands(Group):
 
     def set_lifetime(self, user_id, todo, iden, lifetime) -> str:
         list_len = len(todo)
-        if list_len == 1:
+        if list_len == 0:
             return "here is no item. You can use /todo add."
         if iden.isdigit():
             id = int(iden)
-            if list_len <= id or id < 1:
+            if list_len <= id or id < 0:
                 return f"todo - index {id} is invalid"
 
             todo[id][1] = lifetime.name
             self.update_todo(user_id, todo)
             return ""
 
-        for i in range(1, list_len):
+        for i in range(list_len):
             if iden == todo[i][0]:
                 todo[i][1] = lifetime.name
                 self.update_todo(user_id, todo)
@@ -168,7 +165,7 @@ class TodoCommands(Group):
                 await interaction.response.send_message(msg)
                 return
 
-        if lifetime: # TODO: implement self.set_lifetime func
+        if lifetime:
             msg = self.set_lifetime(interaction.user.id, todo, iden, lifetime)
             if msg != "":
                 await interaction.response.send_message(msg)
@@ -190,14 +187,14 @@ class TodoCommands(Group):
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
         list_len = len(todo)
-        if list_len == 1:
+        if list_len == 0:
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
 
         self.update_lifetime(interaction.user.id, todo)
         if iden.isdigit():
             id = int(iden)
-            if list_len <= id or id < 1:
+            if list_len <= id or id < 0:
                 await interaction.response.send_message(f"todo - there is no id {id}")
                 return
             todo.pop(id)
@@ -205,7 +202,7 @@ class TodoCommands(Group):
             await interaction.response.send_message(f"todo - delete task with id {id}")
             return
 
-        for i in range(1, list_len):
+        for i in range(list_len):
             if iden == todo[i][0]:
                 todo.pop(i)
                 await interaction.response.send_message(f"todo - delete task with name {iden}")
