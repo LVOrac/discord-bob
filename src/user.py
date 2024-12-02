@@ -1,6 +1,7 @@
 import os
 import shutil
 import json
+from datetime import datetime
 from discord import Interaction
 
 def user_initialized(id: int):
@@ -25,6 +26,19 @@ def initialized_user(interaction: Interaction) -> str | None:
 def init_user(interaction: Interaction) -> None:
     user_folder = str(interaction.user.id)
     os.makedirs(user_folder, exist_ok=True)
+    day_path: str = os.path.join(user_folder, "today")
+    with open(day_path, 'w') as f:
+        f.write(str(datetime.now().date()))
+
+def update_today_is_today(id: int) -> bool:
+    day_path: str = os.path.join(str(id), "today")
+    ret = False
+    with open(day_path, 'r') as f:
+        ret = f.read() != str(datetime.now().date())
+    if ret:
+        with open(day_path, 'w') as f:
+            f.write(str(datetime.now().date()))
+    return ret
 
 async def init(interaction: Interaction) -> None:
     path = initialized_user(interaction)
