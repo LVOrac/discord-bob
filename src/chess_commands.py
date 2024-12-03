@@ -146,7 +146,20 @@ class ChessCommands(Group):
         save_board_image(interaction, board, flipped=flipped)
         await interaction.response.send_message(format(f"chess - {best_move}", header="###"), file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
 
-    @command(name='analyze', description='analyze the current game')
+    @command(name="show", description="show current chess board")
+    async def show(self, interaction: Interaction) -> None:
+        if msg := user_initialized(interaction):
+            await interaction.response.send_message(msg)
+            return
+
+        board = load_board(interaction)
+        if board == None:
+            await interaction.response.send_message("chess - Please use /chess new to make a new game")
+            return 
+
+        await interaction.response.send_message(format("chess - current board", header="###"), file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
+
+    @command(name="analyze", description="analyze the current game")
     async def analyze(self, interaction: Interaction) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
