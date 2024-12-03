@@ -2,6 +2,7 @@ import os
 import requests
 import json
 from discord import Interaction
+from typing import Optional
 from discord.app_commands import Choice, Group, command, describe, choices
 from dotenv import load_dotenv
 from user import load_json, user_initialized, update_today_is_today
@@ -75,8 +76,15 @@ class WeatherCommands(Group):
         except requests.exceptions.HTTPError:
             await interaction.response.send_message(f"not found region {region}")
 
+    temp_standard = [
+            Choice(name="Celsius", value="celsius"),
+            Choice(name="Fahrenheit", value="fahrenheit")
+        ]
+
     @command(name="today", description="today's weather")
-    async def today(self, interaction: Interaction) -> None:
+    @describe(temp_standard="Temp Standard")
+    @choices(temp_standard=temp_standard)
+    async def today(self, interaction: Interaction, temp_standard: Optional[Choice[str]]) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
@@ -101,10 +109,19 @@ class WeatherCommands(Group):
         if today == None:
             await interaction.response.send_message("weather - not found wather_today.json")
             return
-        await interaction.response.send_message(f"My Location\n{today["name"]}\n{today["temp"]:.2f}℃  {today["icon"]} - {today["description"]}\n{today["temp_min"]:.2f}℃ - {today["temp_max"]:.2f}℃")
+
+        if temp_standard and temp_standard.name == self.temp_standard[1].name:
+            today["temp"] = today["temp"] * 5.0 / 9 + 32
+            today["temp_max"] = today["temp_max"] * 5.0 / 9 + 32
+            today["temp_min"] = today["temp_min"] * 5.0 / 9 + 32
+            await interaction.response.send_message(f"My Location\n{today["name"]}\n{today["temp"]:.2f}℉  {today["icon"]} - {today["description"]}\n{today["temp_min"]:.2f}℉ - {today["temp_max"]:.2f}℉")
+        else:
+            await interaction.response.send_message(f"My Location\n{today["name"]}\n{today["temp"]:.2f}℃  {today["icon"]} - {today["description"]}\n{today["temp_min"]:.2f}℃ - {today["temp_max"]:.2f}℃")
 
     @command(name="forecast", description="forecast")
-    async def forecast(self, interaction: Interaction) -> None:
+    @describe(temp_standard="Temp Standard")
+    @choices(temp_standard=temp_standard)
+    async def forecast(self, interaction: Interaction, temp_standard: Optional[Choice[str]]) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
@@ -123,12 +140,16 @@ class WeatherCommands(Group):
             forecast = json.loads(response.text)["list"]
             result = ""
             for weather_data in forecast:
-                temp = weather_data["main"]["temp"]
                 description = weather_data["weather"][0]["description"]
                 day_icon = day_icons[description]
                 time = weather_data["dt_txt"]
 
-                result += f"[{time}]  {day_icon} {temp:.2f}℃  - {description}\n"
+                if temp_standard and temp_standard.name == self.temp_standard[1].name:
+                    temp = weather_data["main"]["temp"] * 5.0 / 9 + 32
+                    result += f"[{time}]  {day_icon} {temp:.2f}℉  - {description}\n"
+                else:
+                    temp = weather_data["main"]["temp"]
+                    result += f"[{time}]  {day_icon} {temp:.2f}℃  - {description}\n"
             await interaction.response.send_message(result)
         except requests.exceptions.HTTPError:
             await interaction.response.send_message(f"not found region {region}")
