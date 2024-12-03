@@ -97,7 +97,7 @@ class TodoCommands(Group):
             result = "here is no things to do :)"
         await interaction.response.send_message(result)
 
-    def set_status(self, interaction: Interaction, todo, iden, status) -> str:
+    def find_item_then(self, interaction: Interaction, todo, iden, do) -> str:
         list_len = len(todo)
         if list_len == 0:
             return "here is no item. You can use /todo add."
@@ -106,33 +106,13 @@ class TodoCommands(Group):
             if list_len <= id or id < 0:
                 return f"todo - index {id} is invalid"
 
-            todo[id][2] = status.name
+            do(todo[id])
             self.update_todo(interaction, todo)
             return ""
 
         for i in range(list_len):
             if iden == todo[i][0]:
-                todo[i][2] = status.name
-                self.update_todo(interaction, todo)
-                return ""
-        return ""
-
-    def set_lifetime(self, interaction: Interaction, todo, iden, lifetime) -> str:
-        list_len = len(todo)
-        if list_len == 0:
-            return "here is no item. You can use /todo add."
-        if iden.isdigit():
-            id = int(iden)
-            if list_len <= id or id < 0:
-                return f"todo - index {id} is invalid"
-
-            todo[id][1] = lifetime.name
-            self.update_todo(interaction, todo)
-            return ""
-
-        for i in range(list_len):
-            if iden == todo[i][0]:
-                todo[i][1] = lifetime.name
+                do(todo[i])
                 self.update_todo(interaction, todo)
                 return ""
         return ""
@@ -160,13 +140,17 @@ class TodoCommands(Group):
         self.update_lifetime(interaction, todo)
 
         if status:
-            msg = self.set_status(interaction, todo, iden, status)
+            def do(item):
+                item[2] = status.name
+            msg = self.find_item_then(interaction, todo, iden, do)
             if msg != "":
                 await interaction.response.send_message(msg)
                 return
 
         if lifetime:
-            msg = self.set_lifetime(interaction, todo, iden, lifetime)
+            def do(item):
+                item[1] = lifetime.name
+            msg = self.find_item_then(interaction, todo, iden, do)
             if msg != "":
                 await interaction.response.send_message(msg)
                 return
