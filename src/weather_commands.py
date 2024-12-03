@@ -2,10 +2,9 @@ import os
 import requests
 import json
 from discord import Interaction
-from discord.app_commands import Group, command, describe
+from discord.app_commands import Choice, Group, command, describe, choices
 from dotenv import load_dotenv
 from user import load_json, user_initialized, update_today_is_today
-
 load_dotenv()
 API_2_5: str = str(os.getenv("WEATHER_API_2_5"))
 
@@ -49,9 +48,9 @@ class WeatherCommands(Group):
         description = weather_data["weather"][0]["description"]
         day_icon = day_icons[description]
 
-        path: str = os.path.join(str(interaction.user.id), "weather_today")
+        path: str = os.path.join(str(interaction.user.id), "weather_today.json")
         with open(path, 'w') as f:
-            f.write(f"My Location\n{weather_data["name"]}\n{temp:.2f}℃  {day_icon} - {description}\n{temp_min:.2f}℃ - {temp_max:.2f}℃")
+            f.write(f"{{\"name\":\"{weather_data["name"]}\",\"temp\":{temp},\"temp_max\":{temp_max},\"temp_min\":{temp_min},\"description\":\"{description}\",\"icon\":\"{day_icon}\"}}")
 
     @command(name="region", description="change region")
     @describe(region="region name")
@@ -91,15 +90,18 @@ class WeatherCommands(Group):
             await interaction.response.send_message("weather - not found region. Please use /weather region to specify")
             return
 
-        path: str = os.path.join(str(interaction.user.id), "weather_today")
+        path: str = os.path.join(str(interaction.user.id), "weather_today.json")
         if not os.path.exists(path) or update_today_is_today(interaction):
             try:
                 self.update_weather_today(interaction, region)
             except requests.exceptions.HTTPError:
                 await interaction.response.send_message(f"not found region {region}")
 
-        with open(path, 'r') as f:
-            await interaction.response.send_message(str(f.read()))
+        today = load_json(interaction, "weather_today.json")
+        if today == None:
+            await interaction.response.send_message("weather - not found wather_today.json")
+            return
+        await interaction.response.send_message(f"My Location\n{today["name"]}\n{today["temp"]:.2f}℃  {today["icon"]} - {today["description"]}\n{today["temp_min"]:.2f}℃ - {today["temp_max"]:.2f}℃")
 
     @command(name="forecast", description="forecast")
     async def forecast(self, interaction: Interaction) -> None:
