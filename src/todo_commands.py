@@ -24,8 +24,8 @@ class TodoCommands(Group):
         Choice(name="Once", value="once"),
     ]
 
-    def set_todo_default(self, id: int):
-        todo_path: str = os.path.join(str(id), "todolist.json")
+    def set_todo_default(self, interaction: Interaction):
+        todo_path: str = os.path.join(str(interaction.user.id), "todolist.json")
         with open(todo_path, 'w') as f:
             f.write(f"[]")
 
@@ -64,7 +64,7 @@ class TodoCommands(Group):
 
         todo = self.read_todo(interaction)
         if todo == None:
-            self.set_todo_default(interaction.user.id)
+            self.set_todo_default(interaction)
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
 
@@ -81,7 +81,7 @@ class TodoCommands(Group):
 
         todo = self.read_todo(interaction)
         if todo == None:
-            self.set_todo_default(interaction.user.id)
+            self.set_todo_default(interaction)
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
         result: str = "todo list:\n"
@@ -97,7 +97,7 @@ class TodoCommands(Group):
             result = "here is no things to do :)"
         await interaction.response.send_message(result)
 
-    def set_status(self, user_id, todo, iden, status) -> str:
+    def set_status(self, interaction: Interaction, todo, iden, status) -> str:
         list_len = len(todo)
         if list_len == 0:
             return "here is no item. You can use /todo add."
@@ -107,17 +107,17 @@ class TodoCommands(Group):
                 return f"todo - index {id} is invalid"
 
             todo[id][2] = status.name
-            self.update_todo(user_id, todo)
+            self.update_todo(interaction, todo)
             return ""
 
         for i in range(list_len):
             if iden == todo[i][0]:
                 todo[i][2] = status.name
-                self.update_todo(user_id, todo)
+                self.update_todo(interaction, todo)
                 return ""
         return ""
 
-    def set_lifetime(self, user_id, todo, iden, lifetime) -> str:
+    def set_lifetime(self, interaction: Interaction, todo, iden, lifetime) -> str:
         list_len = len(todo)
         if list_len == 0:
             return "here is no item. You can use /todo add."
@@ -127,13 +127,13 @@ class TodoCommands(Group):
                 return f"todo - index {id} is invalid"
 
             todo[id][1] = lifetime.name
-            self.update_todo(user_id, todo)
+            self.update_todo(interaction, todo)
             return ""
 
         for i in range(list_len):
             if iden == todo[i][0]:
                 todo[i][1] = lifetime.name
-                self.update_todo(user_id, todo)
+                self.update_todo(interaction, todo)
                 return ""
         return ""
 
@@ -153,20 +153,20 @@ class TodoCommands(Group):
 
         todo = self.read_todo(interaction)
         if todo == None:
-            self.set_todo_default(interaction.user.id)
+            self.set_todo_default(interaction)
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
 
         self.update_lifetime(interaction, todo)
 
         if status:
-            msg = self.set_status(interaction.user.id, todo, iden, status)
+            msg = self.set_status(interaction, todo, iden, status)
             if msg != "":
                 await interaction.response.send_message(msg)
                 return
 
         if lifetime:
-            msg = self.set_lifetime(interaction.user.id, todo, iden, lifetime)
+            msg = self.set_lifetime(interaction, todo, iden, lifetime)
             if msg != "":
                 await interaction.response.send_message(msg)
                 return
@@ -183,7 +183,7 @@ class TodoCommands(Group):
 
         todo = self.read_todo(interaction)
         if todo == None:
-            self.set_todo_default(interaction.user.id)
+            self.set_todo_default(interaction)
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
         list_len = len(todo)
