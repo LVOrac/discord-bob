@@ -12,40 +12,40 @@ from chess.engine import SimpleEngine, Limit
 from chess import svg
 from cairosvg import svg2png
 
-def save_stockfish_config(id: int, level: int, depth: int, response_time: float):
-    path: str = os.path.join(str(id), "stockfish_config.json")
+def save_stockfish_config(interaction: Interaction, level: int, depth: int, response_time: float):
+    path: str = os.path.join(str(interaction.user.id), "stockfish_config.json")
     with open(path, 'w') as f:
         f.write(f"[{level},{depth},{response_time}]")
 
-def load_stockfish_config(id: int):
-    path: str = os.path.join(str(id), "stockfish_config.json")
+def load_stockfish_config(interaction: Interaction):
+    path: str = os.path.join(str(interaction.user.id), "stockfish_config.json")
     with open(path, 'r') as f:
         return json.load(f)
 
-def board_exist(id: int) -> bool:
-    board_fen: str = os.path.join(str(id), "board.fen")
+def board_exist(interaction: Interaction) -> bool:
+    board_fen: str = os.path.join(str(interaction.user.id), "board.fen")
     return os.path.exists(board_fen) != None
 
-def save_board(id: int, board) -> None:
-    board_fen: str = os.path.join(str(id), "board.fen")
+def save_board(interaction: Interaction, board) -> None:
+    board_fen: str = os.path.join(str(interaction.user.id), "board.fen")
     with open(board_fen, 'w') as f:
         f.write(board.fen())
 
-def load_board(id: int) -> chess.Board | None:
-    board_fen: str = os.path.join(str(id), "board.fen")
+def load_board(interaction: Interaction) -> chess.Board | None:
+    board_fen: str = os.path.join(str(interaction.user.id), "board.fen")
     if not os.path.exists(board_fen):
         return None
     with open(board_fen, 'r') as f:
         fen = f.read()
         return chess.Board(fen)
 
-def rm_board(id: int) -> None:
-    board_fen: str = os.path.join(str(id), "board.fen")
+def rm_board(interaction: Interaction) -> None:
+    board_fen: str = os.path.join(str(interaction.user.id), "board.fen")
     os.remove(board_fen)
 
-def save_board_image(id: int, board, flipped=False) -> None:
+def save_board_image(interaction: Interaction, board, flipped=False) -> None:
     svg_image = svg.board(board, flipped=flipped)
-    image_path: str = os.path.join(str(id), "chess_board.png")
+    image_path: str = os.path.join(str(interaction.user.id), "chess_board.png")
     with open(image_path, "wb") as f:
         svg2png(bytestring=svg_image.encode('utf-8'), write_to=f, dpi=300)
 
@@ -71,26 +71,26 @@ class ChessCommands(Group):
     @describe(depth="stockfish depths")
     @describe(response_time="stockfish response time")
     async def new(self, interaction: Interaction, start_with: Optional[Choice[str]], level: Optional[int], depth: Optional[int], response_time: Optional[float]) -> None:
-        if msg := user_initialized(interaction.user.id):
+        if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
 
         if start_with == None:
             start_with = self.start_with[0]
 
-        save_stockfish_config(interaction.user.id, 
+        save_stockfish_config(interaction, 
                               0 if level == None else level,
                               1 if depth == None else depth,
                               0.1 if response_time == None else response_time)
 
         board = chess.Board()
         if start_with.name == "White":
-            save_board(interaction.user.id, board)
-            save_board_image(interaction.user.id, board)
+            save_board(interaction, board)
+            save_board_image(interaction, board)
             await interaction.response.send_message(file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
             return
 
-        config = load_stockfish_config(interaction.user.id)
+        config = load_stockfish_config(interaction)
         best_move = AI_move(board, config)
 
         if best_move == None:
@@ -99,17 +99,17 @@ class ChessCommands(Group):
 
         board.push(best_move)
 
-        save_board(interaction.user.id, board)
-        save_board_image(interaction.user.id, board, flipped = True)
+        save_board(interaction, board)
+        save_board_image(interaction, board, flipped = True)
         await interaction.response.send_message(file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
     
     @command(name='move', description='move pieces')
     async def move(self, interaction: Interaction, move: str) -> None:
-        if msg := user_initialized(interaction.user.id):
+        if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
 
-        board = load_board(interaction.user.id)
+        board = load_board(interaction)
         if board == None:
             await interaction.response.send_message("chess - Please use /chess new to make a new game")
             return 
@@ -123,36 +123,36 @@ class ChessCommands(Group):
             return
 
         if board.is_game_over():
-            rm_board(interaction.user.id)
+            rm_board(interaction)
             await interaction.response.send_message(f"chess - you win", file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
             return
 
-        config = load_stockfish_config(interaction.user.id)
+        config = load_stockfish_config(interaction)
         best_move = AI_move(board, config)
 
         if best_move == None:
-            rm_board(interaction.user.id)
+            rm_board(interaction)
             await interaction.response.send_message("chess - ai has no move")
             return
 
         board.push(best_move)
 
         if board.is_game_over():
-            rm_board(interaction.user.id)
+            rm_board(interaction)
             await interaction.response.send_message(f"chess - you loss", file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
             return
 
-        save_board(interaction.user.id, board)
-        save_board_image(interaction.user.id, board, flipped=flipped)
+        save_board(interaction, board)
+        save_board_image(interaction, board, flipped=flipped)
         await interaction.response.send_message(format(f"chess - {best_move}", header="###"), file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
 
     @command(name='analyze', description='analyze the current game')
     async def analyze(self, interaction: Interaction) -> None:
-        if msg := user_initialized(interaction.user.id):
+        if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
 
-        board = load_board(interaction.user.id)
+        board = load_board(interaction)
         if board == None:
             await interaction.response.send_message("chess - Please use /chess new to make a new game")
             return
@@ -160,7 +160,7 @@ class ChessCommands(Group):
         board_fen: str = os.path.join(str(interaction.user.id), "board.fen")
         with open(board_fen, 'r') as f:
             fen = f.read()
-            response = requests.get(f"https://explorer.lichess.ovh/masters?fen={fen}&since=2000&topGames=5&moves=5")
+            response = requests.get(f"https://explorer.lichess.ovh/masters?fen={fen}&since=2000&topGames=20&moves=5")
             tops = json.loads(response.text)["moves"]
             result = format("⠀moves⠀⠀white⠀⠀draws⠀⠀black\n", header="###")
             for top in tops:
