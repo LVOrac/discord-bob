@@ -68,6 +68,7 @@ class TodoCommands(Group):
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
 
+        self.update_lifetime(interaction, todo)
         todo.append([name, lifetime.name, self.status[2].name])
         self.update_todo(interaction, todo)
         await interaction.response.send_message("todo - add a new task " + name)
