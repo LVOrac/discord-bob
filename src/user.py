@@ -4,13 +4,13 @@ import json
 from datetime import datetime
 from discord import Interaction
 
-def user_initialized(id: int):
-    if not os.path.exists(str(id)):
+def user_initialized(interaction: Interaction):
+    if not os.path.exists(str(interaction.user.id)):
         return "please use /init to initialize"
     return None
 
-def load_json(id: int, name: str):
-    path: str = os.path.join(str(id), name)
+def load_json(interaction: Interaction, name: str):
+    path: str = os.path.join(str(interaction.user.id), name)
     if not os.path.exists(path):
         return None
 
@@ -30,8 +30,8 @@ def init_user(interaction: Interaction) -> None:
     with open(day_path, 'w') as f:
         f.write(str(datetime.now().date()))
 
-def update_today_is_today(id: int) -> bool:
-    day_path: str = os.path.join(str(id), "today")
+def update_today_is_today(interaction: Interaction) -> bool:
+    day_path: str = os.path.join(str(interaction.user.id), "today")
     ret = False
     with open(day_path, 'r') as f:
         ret = f.read() != str(datetime.now().date())

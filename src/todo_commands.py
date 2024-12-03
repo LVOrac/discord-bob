@@ -29,16 +29,16 @@ class TodoCommands(Group):
         with open(todo_path, 'w') as f:
             f.write(f"[]")
 
-    def read_todo(self, id: int):
-        return load_json(id, "todolist.json")
+    def read_todo(self, interaction: Interaction):
+        return load_json(interaction, "todolist.json")
 
-    def update_todo(self, id: int, todo) -> None:
-        todo_path: str = os.path.join(str(id), "todolist.json")
+    def update_todo(self, interaction: Interaction, todo) -> None:
+        todo_path: str = os.path.join(str(interaction.user.id), "todolist.json")
         with open(todo_path, 'w') as f:
             f.write(json.dumps(todo))
 
-    def update_lifetime(self, id: int, todo):
-        if not update_today_is_today(id):
+    def update_lifetime(self, interaction: Interaction, todo):
+        if not update_today_is_today(interaction):
             return
 
         for i in range(len(todo) - 1, -1, -1):
@@ -46,7 +46,7 @@ class TodoCommands(Group):
                 todo.pop(i)
                 continue
             todo[i][2] = self.status[2].name;
-        self.update_todo(id, todo)
+        self.update_todo(interaction, todo)
 
     def __init__(self):
         super().__init__(name="todo", description="todo commands")
@@ -55,38 +55,38 @@ class TodoCommands(Group):
     @describe(name="task name")
     @choices(lifetime=lifetime)
     async def add(self, interaction: Interaction, name: str, lifetime: Optional[Choice[str]]) -> None:
-        if msg := user_initialized(interaction.user.id):
+        if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
 
         if lifetime is None:
             lifetime = self.lifetime[0] 
 
-        todo = self.read_todo(interaction.user.id)
+        todo = self.read_todo(interaction)
         if todo == None:
             self.set_todo_default(interaction.user.id)
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
 
         todo.append([name, lifetime.name, self.status[2].name])
-        self.update_todo(interaction.user.id, todo)
+        self.update_todo(interaction, todo)
         await interaction.response.send_message("todo - add a new task " + name)
 
     @command(name="show", description="show task")
     @choices(lifetime=lifetime)
     async def show(self, interaction: Interaction, lifetime: Optional[Choice[str]]) -> None:
-        if msg := user_initialized(interaction.user.id):
+        if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
 
-        todo = self.read_todo(interaction.user.id)
+        todo = self.read_todo(interaction)
         if todo == None:
             self.set_todo_default(interaction.user.id)
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
         result: str = "todo list:\n"
         if len(todo) != 0:
-            self.update_lifetime(interaction.user.id, todo)
+            self.update_lifetime(interaction, todo)
             for i in range(len(todo)):
                 if lifetime:
                     if lifetime.name == todo[i][1]:
@@ -143,7 +143,7 @@ class TodoCommands(Group):
     @choices(status=status)
     @choices(lifetime=lifetime)
     async def set(self, interaction: Interaction, iden: str, status: Optional[Choice[str]], lifetime: Optional[Choice[str]]) -> None:
-        if msg := user_initialized(interaction.user.id):
+        if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
 
@@ -151,13 +151,13 @@ class TodoCommands(Group):
             await interaction.response.send_message("todo - obviously you did nothing")
             return
 
-        todo = self.read_todo(interaction.user.id)
+        todo = self.read_todo(interaction)
         if todo == None:
             self.set_todo_default(interaction.user.id)
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
 
-        self.update_lifetime(interaction.user.id, todo)
+        self.update_lifetime(interaction, todo)
 
         if status:
             msg = self.set_status(interaction.user.id, todo, iden, status)
@@ -177,11 +177,11 @@ class TodoCommands(Group):
     @command(name="del", description="del a task")
     @describe(iden="task id / name")
     async def delete(self, interaction: Interaction, iden: str) -> None:
-        if msg := user_initialized(interaction.user.id):
+        if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
 
-        todo = self.read_todo(interaction.user.id)
+        todo = self.read_todo(interaction)
         if todo == None:
             self.set_todo_default(interaction.user.id)
             await interaction.response.send_message("here is no item. You can use /todo add.")
@@ -191,14 +191,14 @@ class TodoCommands(Group):
             await interaction.response.send_message("here is no item. You can use /todo add.")
             return
 
-        self.update_lifetime(interaction.user.id, todo)
+        self.update_lifetime(interaction, todo)
         if iden.isdigit():
             id = int(iden)
             if list_len <= id or id < 0:
                 await interaction.response.send_message(f"todo - there is no id {id}")
                 return
             todo.pop(id)
-            self.update_todo(interaction.user.id, todo)
+            self.update_todo(interaction, todo)
             await interaction.response.send_message(f"todo - delete task with id {id}")
             return
 
@@ -206,7 +206,7 @@ class TodoCommands(Group):
             if iden == todo[i][0]:
                 todo.pop(i)
                 await interaction.response.send_message(f"todo - delete task with name {iden}")
-                self.update_todo(interaction.user.id, todo)
+                self.update_todo(interaction, todo)
                 return
         await interaction.response.send_message(f"todo - not find name {iden}")
 
