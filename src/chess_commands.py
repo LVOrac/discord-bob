@@ -65,14 +65,15 @@ class ChessCommands(Group):
         help = """### Usage:
         /chess <Commands> [settings ...]
 ### Commands:
-    - new [start_with] [level] [depth] [response_time] - start a new chess game
-      - start_with - White, Black
+    - new [start] [level] [depth] [response_time] - start a new chess game
+      - start - White, Black
       - level - Integer
       - depth - Integer
       - reponse_time - Float
     - move <legal_move> - move pieces
       - e.g. e4e5, e5, g1f3, ...
     - show - show current chess board 
+    - fen - show current board fen
     - analyze [moves] - analyze the current game
       - moves - Integer
 """
@@ -88,13 +89,13 @@ class ChessCommands(Group):
     @describe(level="stockfish levels")
     @describe(depth="stockfish depths")
     @describe(response_time="stockfish response time")
-    async def new(self, interaction: Interaction, start_with: Optional[Choice[str]], level: Optional[int], depth: Optional[int], response_time: Optional[float]) -> None:
+    async def new(self, interaction: Interaction, start: Optional[Choice[str]], level: Optional[int], depth: Optional[int], response_time: Optional[float]) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
 
-        if start_with == None:
-            start_with = self.start_with[0]
+        if start == None:
+            start = self.start_with[0]
 
         save_stockfish_config(interaction, 
                               0 if level == None else level,
@@ -102,7 +103,7 @@ class ChessCommands(Group):
                               0.1 if response_time == None else response_time)
 
         board = chess.Board()
-        if start_with.name == "White":
+        if start.name == "White":
             save_board(interaction, board)
             save_board_image(interaction, board)
             await interaction.response.send_message(file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
