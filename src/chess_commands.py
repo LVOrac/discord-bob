@@ -85,7 +85,7 @@ class ChessCommands(Group):
     ]
 
     @command(name='new', description='start a new chess game')
-    @choices(start_with=start_with)
+    @choices(start=start_with)
     @describe(level="stockfish levels")
     @describe(depth="stockfish depths")
     @describe(response_time="stockfish response time")
