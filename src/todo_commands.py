@@ -268,6 +268,42 @@ Commands: add show set del target
         update_todo(interaction, todo, target)
         await interaction.response.send_message("todo - add a new task " + name)
 
+    @command(name="shwall", description="show all tasks in all lists")
+    @choices(lifetime=lifetimes)
+    async def shwall(self, interaction: Interaction, lifetime: Optional[Choice[str]]) -> None:
+        if msg := user_initialized(interaction):
+            await interaction.response.send_message(msg)
+            return
+
+        listname = read_listname(interaction)
+        if listname == None or (listname[0] == '' and len(listname) == 1):
+            await interaction.response.send_message("todo - here is no list. You can use /todo list add")
+            return
+
+        if listname[0] == '':
+           await interaction.response.send_message("todo - here is no target list. You can use /todo switch")
+           return
+        
+        result: str = ""
+        for i in range(1, len(listname)):
+            todo = load_json(interaction, f"{listname[i]}.json")
+            if todo == None:
+                await interaction.response.send_message(f"todo - list {listname[i]} is missing")
+                return
+            result += f"### {listname[i]} Tasks:\n"
+            if len(todo) != 0:
+                update_lifetime(interaction, todo, listname[i])
+                for i in range(len(todo)):
+                    if lifetime:
+                        if lifetime.name == todo[i][1]:
+                            result += format(f"[{i:>2}] - {todo[i][0]} {status_char[todo[i][2]]}\n", style=Style.BulletedList)
+                    else:
+                        result += format(f"[{i:>2}] - {todo[i][0]} {status_char[todo[i][2]]}\n", style=Style.BulletedList)
+            else:
+                result = "here is no things to do :)"
+        await interaction.response.send_message(result)
+
+
     @command(name="show", description="show task")
     @describe(target="target list name - cannot be a number")
     @choices(lifetime=lifetimes)
