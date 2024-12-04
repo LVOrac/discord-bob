@@ -82,6 +82,7 @@ class TodoCommands(Group):
             os.remove(path)
 
         @command(name="add", description="add a list")
+        @describe(name="cannot be a number")
         async def add(self, interaction: Interaction, name: str) -> None:
             if msg := user_initialized(interaction):
                 await interaction.response.send_message(msg)
@@ -141,6 +142,7 @@ class TodoCommands(Group):
             return f"todo - not find iden {iden}"
 
         @command(name="del", description="delete a list")
+        @describe(iden="task id / name")
         async def delete(self, interaction: Interaction, iden: str) -> None:
             if msg := user_initialized(interaction):
                 await interaction.response.send_message(msg)
@@ -164,6 +166,8 @@ class TodoCommands(Group):
             await interaction.response.send_message(self.find_iden_then(do, listname, iden))
 
         @command(name="rename", description="rename a list")
+        @describe(iden="task id / name")
+        @describe(name="cannot be a number")
         async def rename(self, interaction: Interaction, iden: str, name: str) -> None:
             if msg := user_initialized(interaction):
                 await interaction.response.send_message(msg)
