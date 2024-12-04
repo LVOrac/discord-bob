@@ -303,10 +303,10 @@ Commands: add show set del target
             result = "here is no things to do :)"
         await interaction.response.send_message(result)
 
-    def find_item_then(self, todo, iden, do) -> Tuple[bool, str]:
+    def find_task_then(self, todo, iden, do) -> Tuple[bool, str]:
         list_len = len(todo)
         if list_len == 0:
-            return (True, "here is no item. You can use /todo add.")
+            return (True, "here is no task. You can use /todo add.")
         if iden.isdigit():
             id = int(iden)
             if list_len <= id or id < 0:
@@ -354,7 +354,7 @@ Commands: add show set del target
                 todo[i][2] = status.name
                 update_todo(interaction, todo, target)
                 return (False, "")
-            err, msg = self.find_item_then(todo, iden, do)
+            err, msg = self.find_task_then(todo, iden, do)
             if err:
                 await interaction.response.send_message(msg)
                 return
@@ -364,7 +364,7 @@ Commands: add show set del target
                 todo[i][1] = lifetime.name
                 update_todo(interaction, todo, target)
                 return (False, "")
-            err, msg = self.find_item_then(todo, iden, do)
+            err, msg = self.find_task_then(todo, iden, do)
             if err:
                 await interaction.response.send_message(msg)
                 return
@@ -399,7 +399,7 @@ Commands: add show set del target
             update_todo(interaction, todo, target)
             return (False, "")
 
-        err, msg = self.find_item_then(todo, iden, do) 
+        err, msg = self.find_task_then(todo, iden, do) 
         if err:
             await interaction.response.send_message(msg)
             return
@@ -445,5 +445,5 @@ Commands: add show set del target
             update_todo(interaction, todo, target)
             return (False, f"todo - rename task {oldname} to {name}")
 
-        err, msg = self.find_item_then(todo, iden, do) 
+        err, msg = self.find_task_then(todo, iden, do) 
         await interaction.response.send_message(msg)
