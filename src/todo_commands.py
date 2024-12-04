@@ -270,7 +270,7 @@ Commands: add show set del target
 
     @command(name="show", description="show task")
     @choices(lifetime=lifetimes)
-    async def show(self, interaction: Interaction, lifetime: Optional[Choice[str]]) -> None:
+    async def show(self, interaction: Interaction, lifetime: Optional[Choice[str]], target: Optional[str]) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
@@ -284,15 +284,24 @@ Commands: add show set del target
            await interaction.response.send_message("todo - here is no target list. You can use /todo switch")
            return
 
-        target = f"{listname[0]}.json"
-        todo = load_json(interaction, target)
+        if target == None:
+            listname = listname[0]
+        elif target in listname:
+            listname = target
+        else:
+           await interaction.response.send_message(f"todo - not found target {target}")
+           return
+
+        target_list = f"{listname}.json"
+
+        todo = load_json(interaction, target_list)
         if todo == None:
-            await interaction.response.send_message(f"todo - target {target} is missing")
+            await interaction.response.send_message(f"todo - target {target_list} is missing")
             return
 
-        result: str = f"### {listname[0]} Tasks:\n"
+        result: str = f"### {listname} Tasks:\n"
         if len(todo) != 0:
-            update_lifetime(interaction, todo, target)
+            update_lifetime(interaction, todo, target_list)
             for i in range(len(todo)):
                 if lifetime:
                     if lifetime.name == todo[i][1]:
