@@ -1,10 +1,27 @@
 import os
 import json
 from discord import Interaction
-from typing import Optional
+from typing import Optional, Tuple
 from discord.app_commands import Group, Choice, command, describe, choices
 from text_style import Style, format
 from user import load_json, user_initialized, update_today_is_today
+
+status = [
+    Choice(name="Done", value="Done"),
+    Choice(name="In Progress", value="In progress"),
+    Choice(name="Missing", value="Missing"),
+]
+
+status_char = {
+        status[0].name: '☑',
+        status[1].name: '⧖',
+        status[2].name: '☒',
+}
+
+lifetimes = [
+    Choice(name="Daily", value="daily"),
+    Choice(name="Once", value="once"),
+]
 
 def read_listname(interaction: Interaction):
     return load_json(interaction, "listnames.json")
@@ -20,40 +37,23 @@ def update_listname(interaction: Interaction, todo) -> None:
     with open(path, 'w') as f:
         f.write(json.dumps(todo))
 
+def update_todo(interaction: Interaction, todo, name: str) -> None:
+    todo_path: str = os.path.join(str(interaction.user.id), name)
+    with open(todo_path, 'w') as f:
+        f.write(json.dumps(todo))
+
+def update_lifetime(interaction: Interaction, todo, name: str) -> None:
+    if not update_today_is_today(interaction):
+        return
+
+    for i in range(len(todo) - 1, -1, -1):
+        if todo[i][1] == "Once":
+            todo.pop(i)
+            continue
+        todo[i][2] = status[2].name;
+    update_todo(interaction, todo, name)
+
 class TodoCommands(Group):
-    status = [
-        Choice(name="Done", value="Done"),
-        Choice(name="In Progress", value="In progress"),
-        Choice(name="Missing", value="Missing"),
-    ]
-
-    status_char = {
-            status[0].name: '☑',
-            status[1].name: '⧖',
-            status[2].name: '☒',
-    }
-
-    lifetime = [
-        Choice(name="Daily", value="daily"),
-        Choice(name="Once", value="once"),
-    ]
-
-    def update_todo(self, interaction: Interaction, todo, name) -> None:
-        todo_path: str = os.path.join(str(interaction.user.id), name)
-        with open(todo_path, 'w') as f:
-            f.write(json.dumps(todo))
-
-    def update_lifetime(self, interaction: Interaction, todo, name) -> None:
-        if not update_today_is_today(interaction):
-            return
-
-        for i in range(len(todo) - 1, -1, -1):
-            if todo[i][1] == "Once":
-                todo.pop(i)
-                continue
-            todo[i][2] = self.status[2].name;
-        self.update_todo(interaction, todo, name)
-
     def __init__(self):
         super().__init__(name="todo", description="todo commands")
         self.add_command(self.ListCommands())
@@ -97,7 +97,7 @@ class TodoCommands(Group):
                 return
 
             if name.isdigit():
-                await interaction.response.send_message(f"todo - list name cannot be number '{name}'")
+                await interaction.response.send_message(f"todo - list name cannot be a number '{name}'")
                 return
 
             if name in listname[1:]:
@@ -140,8 +140,8 @@ class TodoCommands(Group):
 
             return f"todo - not find iden {iden}"
 
-        @command(name="remove", description="remove a list")
-        async def remove(self, interaction: Interaction, iden: str) -> None:
+        @command(name="del", description="delete a list")
+        async def delete(self, interaction: Interaction, iden: str) -> None:
             if msg := user_initialized(interaction):
                 await interaction.response.send_message(msg)
 
@@ -152,9 +152,7 @@ class TodoCommands(Group):
 
             if listname == None:
                 await interaction.response.send_message("todo - not found listname.json")
-
-            if iden == listname:
-                await interaction.response.send_message(f"todo - list {iden} already exist")
+                return
 
             def do(listname, i: int):
                 if listname[0] == listname[i]:
@@ -170,6 +168,10 @@ class TodoCommands(Group):
             if msg := user_initialized(interaction):
                 await interaction.response.send_message(msg)
 
+            if name.isdigit():
+                await interaction.response.send_message(f"todo - list name cannot be a number '{name}'")
+                return
+
             listname = read_listname(interaction)
             if listname == None:
                 self.set_listname_default(interaction)
@@ -177,6 +179,11 @@ class TodoCommands(Group):
 
             if listname == None:
                 await interaction.response.send_message("todo - not found listname.json")
+                return
+
+            if name in listname:
+                await interaction.response.send_message(f"todo - list {name} already exist")
+                return
 
             def do(listname, i: int):
                 oldname = listname[i]
@@ -192,7 +199,7 @@ class TodoCommands(Group):
     async def help(self, interaction: Interaction) -> None:
         help = """Usage:
         /todo <Commands> [settings ...]
-Commands: add show set delete target
+Commands: add show set del target
         """
         await interaction.response.send_message(format(help, style=Style.Bold))
 
@@ -222,14 +229,18 @@ Commands: add show set delete target
 
     @command(name="add", description="add task")
     @describe(name="task name")
-    @choices(lifetime=lifetime)
+    @choices(lifetime=lifetimes)
     async def add(self, interaction: Interaction, name: str, lifetime: Optional[Choice[str]]) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
 
+        if name.isdigit():
+            await interaction.response.send_message(f"todo - list name cannot be a number '{name}'")
+            return
+
         if lifetime == None:
-            lifetime = self.lifetime[0] 
+            lifetime = lifetimes[0] 
 
         target = read_listname(interaction)
         if target == None or (target[0] == '' and len(target) == 1):
@@ -246,13 +257,13 @@ Commands: add show set delete target
             await interaction.response.send_message(f"todo - target {target} is missing")
             return
 
-        self.update_lifetime(interaction, todo, target)
-        todo.append([name, lifetime.name, self.status[2].name])
-        self.update_todo(interaction, todo, target)
+        update_lifetime(interaction, todo, target)
+        todo.append([name, lifetime.name, status[2].name])
+        update_todo(interaction, todo, target)
         await interaction.response.send_message("todo - add a new task " + name)
 
     @command(name="show", description="show task")
-    @choices(lifetime=lifetime)
+    @choices(lifetime=lifetimes)
     async def show(self, interaction: Interaction, lifetime: Optional[Choice[str]]) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
@@ -275,37 +286,37 @@ Commands: add show set delete target
 
         result: str = f"### {listname[0]} Tasks:\n"
         if len(todo) != 0:
-            self.update_lifetime(interaction, todo, target)
+            update_lifetime(interaction, todo, target)
             for i in range(len(todo)):
                 if lifetime:
                     if lifetime.name == todo[i][1]:
-                        result += format(f"[{i:>2}] - {todo[i][0]} {self.status_char[todo[i][2]]}\n", style=Style.BulletedList)
+                        result += format(f"[{i:>2}] - {todo[i][0]} {status_char[todo[i][2]]}\n", style=Style.BulletedList)
                 else:
-                    result += format(f"[{i:>2}] - {todo[i][0]} {self.status_char[todo[i][2]]}\n", style=Style.BulletedList)
+                    result += format(f"[{i:>2}] - {todo[i][0]} {status_char[todo[i][2]]}\n", style=Style.BulletedList)
         else:
             result = "here is no things to do :)"
         await interaction.response.send_message(result)
 
-    def find_item_then(self, todo, iden, do) -> str:
+    def find_item_then(self, todo, iden, do) -> Tuple[bool, str]:
         list_len = len(todo)
         if list_len == 0:
-            return "here is no item. You can use /todo add."
+            return (True, "here is no item. You can use /todo add.")
         if iden.isdigit():
             id = int(iden)
             if list_len <= id or id < 0:
-                return f"todo - index {id} is invalid"
+                return (True, f"todo - index {id} is invalid")
             return do(todo, id)
 
         for i in range(list_len):
             if iden == todo[i][0]:
                 return do(todo, i)
-        return ""
+        return (True, "todo - not found iden {iden}")
 
     @command(name="set", description="set task status")
     @describe(iden="task id / name")
     @describe(status="status")
     @choices(status=status)
-    @choices(lifetime=lifetime)
+    @choices(lifetime=lifetimes)
     async def set(self, interaction: Interaction, iden: str, status: Optional[Choice[str]], lifetime: Optional[Choice[str]]) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
@@ -330,25 +341,25 @@ Commands: add show set delete target
             await interaction.response.send_message(f"todo - target {target} is missing")
             return
 
-        self.update_lifetime(interaction, todo, target)
+        update_lifetime(interaction, todo, target)
 
         if status:
             def do(todo, i: int):
                 todo[i][2] = status.name
-                self.update_todo(interaction, todo, target)
-                return ""
-            msg = self.find_item_then(todo, iden, do)
-            if msg != "":
+                update_todo(interaction, todo, target)
+                return (False, "")
+            err, msg = self.find_item_then(todo, iden, do)
+            if err:
                 await interaction.response.send_message(msg)
                 return
 
         if lifetime:
             def do(todo, i: int):
                 todo[i][1] = lifetime.name
-                self.update_todo(interaction, todo, target)
-                return ""
-            msg = self.find_item_then(todo, iden, do)
-            if msg != "":
+                update_todo(interaction, todo, target)
+                return (False, "")
+            err, msg = self.find_item_then(todo, iden, do)
+            if err:
                 await interaction.response.send_message(msg)
                 return
 
@@ -379,10 +390,11 @@ Commands: add show set delete target
 
         def do(todo, i: int):
             todo.pop(i)
-            self.update_todo(interaction, todo, target)
-            return ""
+            update_todo(interaction, todo, target)
+            return (False, "")
 
-        if msg := self.find_item_then(todo, iden, do):
+        err, msg = self.find_item_then(todo, iden, do) 
+        if err:
             await interaction.response.send_message(msg)
             return
 
