@@ -177,6 +177,19 @@ class ChessCommands(Group):
 
         await interaction.response.send_message(format("chess - current board", header="###"), file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
 
+    @command(name="fen", description="show current board fen")
+    async def fen(self, interaction: Interaction) -> None:
+        if msg := user_initialized(interaction):
+            await interaction.response.send_message(msg)
+            return
+
+        board_fen: str = os.path.join(str(interaction.user.id), "board.fen")
+        if not os.path.exists(board_fen):
+            await interaction.response.send_message("chess -  Please use /chess new to make a new game")
+            return
+        with open(board_fen, 'r') as f:
+            await interaction.response.send_message(f.read())
+
     @command(name="analyze", description="analyze the current game")
     async def analyze(self, interaction: Interaction, moves: Optional[int]) -> None:
         if msg := user_initialized(interaction):
@@ -190,22 +203,27 @@ class ChessCommands(Group):
 
         if moves == None:
             moves = 5
+        
+        if moves <= 0:
+            await interaction.response.send_message("chess - moves need to be positive number")
+            return
 
         board_fen: str = os.path.join(str(interaction.user.id), "board.fen")
         with open(board_fen, 'r') as f:
             fen = f.read()
-            response = requests.get(f"https://explorer.lichess.ovh/masters?fen={fen}&moves={moves}")
+            response = requests.get(f"https://explorer.lichess.ovh/masters?fen={fen}&moves={moves}&top_moves={moves}")
             tops = json.loads(response.text)["moves"]
-            result = format("⠀moves⠀⠀white⠀⠀draws⠀⠀black\n", header="###")
+            result = format("⠀moves⠀games⠀⠀white⠀⠀draws⠀⠀black\n", header="###")
             for top in tops:
                 white = top["white"]
                 draws = top["draws"]
                 black = top["black"]
+                games = white + draws + black
                 rtotal = 1.0 / (white + black + draws)
                 white *= rtotal
                 draws *= rtotal
                 black *= rtotal
 
-                blocks = 25
-                result += format(f"{top["uci"]:^5} [{'█' * int(blocks * white)}{'▒' * int(blocks * draws)}{'░' * int(blocks * black)}]\n", style=Style.BulletedList)
+                blocks = 24
+                result += format(f"{top["uci"]:^3} ⠀{games:>3}⠀ [{'█' * int(blocks * white)}{'▒' * int(blocks * draws)}{'░' * int(blocks * black)}]\n", style=Style.BulletedList)
             await interaction.response.send_message(result)
