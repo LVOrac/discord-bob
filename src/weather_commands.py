@@ -6,6 +6,7 @@ from typing import Optional
 from discord.app_commands import Choice, Group, command, describe, choices
 from dotenv import load_dotenv
 from user import load_json, user_initialized, update_today_is_today
+
 load_dotenv()
 API_2_5: str = str(os.getenv("WEATHER_API_2_5"))
 
@@ -52,6 +53,20 @@ class WeatherCommands(Group):
         path: str = os.path.join(str(interaction.user.id), "weather_today.json")
         with open(path, 'w') as f:
             f.write(f"{{\"name\":\"{weather_data["name"]}\",\"temp\":{temp},\"temp_max\":{temp_max},\"temp_min\":{temp_min},\"description\":\"{description}\",\"icon\":\"{day_icon}\"}}")
+
+    @command(name="help", description="show weather's functions")
+    async def help(self, interaction: Interaction) -> None:
+        help = """### Usage:
+        /weather <Commands> [settings ...]
+### Commands:
+    - region <region name> - Change weather's region
+      - e.g. cuperino, CUPERTINO, SAN jose, ...
+    - today [temp standard] - Display today's weather
+      - temp standard - Celsius, Fahrenheit
+    - forecast [temp standard] - Display forecast
+      - temp standard - Celsius, Fahrenheit
+"""
+        await interaction.response.send_message(help)
 
     @command(name="region", description="change region")
     @describe(region="region name")
@@ -146,7 +161,7 @@ class WeatherCommands(Group):
             temp_standard = self.temp_standard[0]
 
         try:
-            response = requests.get(f"https://api.openweathermap.org/data/2.5/forecast?lat={region[1]}&lon={region[2]}&appid={API_2_5}&units=metric")
+            response = requests.get(f"https://api.openweathermap.org/data/2.5/forecast?lat={region[1]}&lon={region[2]}&appid={API_2_5}&units=metric&cnt=60")
             forecast = json.loads(response.text)["list"]
             result = ""
             for weather_data in forecast:

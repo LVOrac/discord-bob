@@ -60,6 +60,24 @@ class ChessCommands(Group):
     def __init__(self):
         super().__init__(name="chess", description="chess commands")
 
+    @command(name="help", description="show weather's functions")
+    async def help(self, interaction: Interaction) -> None:
+        help = """### Usage:
+        /chess <Commands> [settings ...]
+### Commands:
+    - new [start_with] [level] [depth] [response_time] - start a new chess game
+      - start_with - White, Black
+      - level - Integer
+      - depth - Integer
+      - reponse_time - Float
+    - move <legal_move> - move pieces
+      - e.g. e4e5, e5, g1f3, ...
+    - show - show current chess board 
+    - analyze [moves] - analyze the current game
+      - moves - Integer
+"""
+        await interaction.response.send_message(help)
+
     start_with = [
         Choice(name="White", value="white"),
         Choice(name="Black", value="black")
@@ -160,7 +178,7 @@ class ChessCommands(Group):
         await interaction.response.send_message(format("chess - current board", header="###"), file=File(os.path.join(str(interaction.user.id), "chess_board.png")))
 
     @command(name="analyze", description="analyze the current game")
-    async def analyze(self, interaction: Interaction) -> None:
+    async def analyze(self, interaction: Interaction, moves: Optional[int]) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
@@ -170,10 +188,13 @@ class ChessCommands(Group):
             await interaction.response.send_message("chess - Please use /chess new to make a new game")
             return
 
+        if moves == None:
+            moves = 5
+
         board_fen: str = os.path.join(str(interaction.user.id), "board.fen")
         with open(board_fen, 'r') as f:
             fen = f.read()
-            response = requests.get(f"https://explorer.lichess.ovh/masters?fen={fen}&since=2000&topGames=20&moves=6")
+            response = requests.get(f"https://explorer.lichess.ovh/masters?fen={fen}&moves={moves}")
             tops = json.loads(response.text)["moves"]
             result = format("⠀moves⠀⠀white⠀⠀draws⠀⠀black\n", header="###")
             for top in tops:
