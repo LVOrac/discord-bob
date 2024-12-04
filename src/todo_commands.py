@@ -217,6 +217,7 @@ Commands: add show set del target
         await interaction.response.send_message(f"todo - current target is {"not been setted" if listname[0] == '' else listname[0]}")
 
     @command(name="swtich", description="switch to another list")
+    @describe(iden="task id / name")
     async def switch(self, interaction: Interaction, iden: str) -> None:
         listname = read_listname(interaction)
         if listname == None or (listname[0] == '' and len(listname) == 1):
