@@ -185,9 +185,10 @@ class TodoCommands(Group):
                 await interaction.response.send_message("todo - not found listname.json")
                 return
 
-            if name in listname:
-                await interaction.response.send_message(f"todo - list {name} already exist")
-                return
+            for i in range(1, len(listname)):
+                if listname[i] == name:
+                    await interaction.response.send_message(f"todo - list '{name}' already exist at {i}")
+                    return
 
             def do(listname, i: int):
                 oldname = listname[i]
@@ -405,3 +406,44 @@ Commands: add show set del target
 
         await interaction.response.send_message(f"todo - not find name {iden}")
 
+    @command(name="rename", description="del a task")
+    @describe(iden="task id / name")
+    @describe(name="cannot be a number")
+    async def rename(self, interaction: Interaction, iden: str, name: str) -> None:
+        if msg := user_initialized(interaction):
+            await interaction.response.send_message(msg)
+            return
+
+        if name.isdigit():
+            await interaction.response.send_message(f"todo - list name cannot be a number '{name}'")
+            return
+
+        target = read_listname(interaction)
+        if target == None or (target[0] == '' and len(target) == 1):
+            await interaction.response.send_message("todo - here is no list. You can use /todo list add")
+            return
+
+        if target[0] == '':
+           await interaction.response.send_message("todo - here is no target list. You can use /todo switch")
+           return
+
+        target = f"{target[0]}.json"
+        todo = load_json(interaction, target)
+        if todo == None:
+            await interaction.response.send_message(f"todo - target {target} is missing")
+            return
+
+        for i in range(len(todo)):
+            print(todo[i][0])
+            if todo[i][0] == name:
+                await interaction.response.send_message(f"todo - task '{name}' already exist at {i}")
+                return
+
+        def do(todo, i: int):
+            oldname = todo[i][0]
+            todo[i][0] = name
+            update_todo(interaction, todo, target)
+            return (False, f"todo - rename task {oldname} to {name}")
+
+        err, msg = self.find_item_then(todo, iden, do) 
+        await interaction.response.send_message(msg)
