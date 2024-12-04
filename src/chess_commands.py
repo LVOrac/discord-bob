@@ -173,7 +173,7 @@ class ChessCommands(Group):
         board_fen: str = os.path.join(str(interaction.user.id), "board.fen")
         with open(board_fen, 'r') as f:
             fen = f.read()
-            response = requests.get(f"https://explorer.lichess.ovh/masters?fen={fen}&since=2000&topGames=20&moves=5")
+            response = requests.get(f"https://explorer.lichess.ovh/masters?fen={fen}&since=2000&topGames=20&moves=6")
             tops = json.loads(response.text)["moves"]
             result = format("⠀moves⠀⠀white⠀⠀draws⠀⠀black\n", header="###")
             for top in tops:
@@ -185,6 +185,6 @@ class ChessCommands(Group):
                 draws *= rtotal
                 black *= rtotal
 
-                blocks = 20
+                blocks = 25
                 result += format(f"{top["uci"]:^5} [{'█' * int(blocks * white)}{'▒' * int(blocks * draws)}{'░' * int(blocks * black)}]\n", style=Style.BulletedList)
             await interaction.response.send_message(result)
