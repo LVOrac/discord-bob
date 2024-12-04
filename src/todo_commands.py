@@ -269,7 +269,7 @@ Commands: add show set del target
         await interaction.response.send_message("todo - add a new task " + name)
 
     @command(name="show", description="show task")
-    @describe(target="target list")
+    @describe(target="target list name - cannot be a number")
     @choices(lifetime=lifetimes)
     async def show(self, interaction: Interaction, lifetime: Optional[Choice[str]], target: Optional[str]) -> None:
         if msg := user_initialized(interaction):
@@ -287,6 +287,9 @@ Commands: add show set del target
 
         if target == None:
             listname = listname[0]
+        elif target.isdigit():
+           await interaction.response.send_message(f"todo - target cannot be a number")
+           return
         elif target in listname:
             listname = target
         else:
