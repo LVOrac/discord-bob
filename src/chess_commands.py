@@ -12,7 +12,7 @@ from chess.engine import SimpleEngine, Limit
 from chess import svg
 from cairosvg import svg2png
 
-def save_stockfish_config(interaction: Interaction, level: int, depth: int, response_time: float):
+def save_stockfish_config(interaction: Interaction, level: int, depth: int, response_time: float) -> None:
     path: str = os.path.join(str(interaction.user.id), "stockfish_config.json")
     with open(path, 'w') as f:
         f.write(f"[{level},{depth},{response_time}]")

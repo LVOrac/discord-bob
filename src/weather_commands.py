@@ -31,13 +31,13 @@ class WeatherCommands(Group):
         with open(path, 'w') as f:
             f.write(f"[\"{region}\",{lat},{lon}]")
 
-    def set_default_region(self, interaction: Interaction):
+    def set_default_region(self, interaction: Interaction) -> None:
         self.update_region(interaction, "Cupertino", 37.3228934, -122.0322895)
 
     def load_region(self, interaction: Interaction):
         return load_json(interaction, "weather_region.json")
 
-    def update_weather_today(self, interaction: Interaction, region):
+    def update_weather_today(self, interaction: Interaction, region) -> None:
         response = requests.get(f"https://api.openweathermap.org/data/2.5/weather?lat={region[1]}&lon={region[2]}&appid={API_2_5}&units=metric")
 
         weather_data = json.loads(response.text)
@@ -72,7 +72,7 @@ class WeatherCommands(Group):
             self.update_region(interaction, region, cor["lat"], cor["lon"])
             reg = self.load_region(interaction)
             self.update_weather_today(interaction, reg)
-            await interaction.response.send_message(f"weahter - {region} {cor["lat"]} {cor["lon"]}")
+            await interaction.response.send_message(f"weahter - region changed to {region}")
         except requests.exceptions.HTTPError:
             await interaction.response.send_message(f"not found region {region}")
 
@@ -80,6 +80,11 @@ class WeatherCommands(Group):
             Choice(name="Celsius", value="celsius"),
             Choice(name="Fahrenheit", value="fahrenheit")
         ]
+
+    temp_icons = {
+            temp_standard[0].name: "℃",
+            temp_standard[1].name: "℉"
+        }
 
     @command(name="today", description="today's weather")
     @describe(temp_standard="Temp Standard")
@@ -110,13 +115,15 @@ class WeatherCommands(Group):
             await interaction.response.send_message("weather - not found wather_today.json")
             return
 
+        if temp_standard == None:
+            temp_standard = self.temp_standard[0]
+
         if temp_standard and temp_standard.name == self.temp_standard[1].name:
             today["temp"] = today["temp"] * 5.0 / 9 + 32
             today["temp_max"] = today["temp_max"] * 5.0 / 9 + 32
             today["temp_min"] = today["temp_min"] * 5.0 / 9 + 32
-            await interaction.response.send_message(f"My Location\n{today["name"]}\n{today["temp"]:.2f}℉  {today["icon"]} - {today["description"]}\n{today["temp_min"]:.2f}℉ - {today["temp_max"]:.2f}℉")
-        else:
-            await interaction.response.send_message(f"My Location\n{today["name"]}\n{today["temp"]:.2f}℃  {today["icon"]} - {today["description"]}\n{today["temp_min"]:.2f}℃ - {today["temp_max"]:.2f}℃")
+        icon = self.temp_icons[temp_standard.name]
+        await interaction.response.send_message(f"My Location\n{today["name"]}\n{today["temp"]:.2f}{icon}  {today["icon"]} - {today["description"]}\n{today["temp_min"]:.2f}{icon} - {today["temp_max"]:.2f}{icon}")
 
     @command(name="forecast", description="forecast")
     @describe(temp_standard="Temp Standard")
@@ -135,6 +142,9 @@ class WeatherCommands(Group):
             await interaction.response.send_message("weather - not found region. Please use /weather region to specify")
             return
 
+        if temp_standard == None:
+            temp_standard = self.temp_standard[0]
+
         try:
             response = requests.get(f"https://api.openweathermap.org/data/2.5/forecast?lat={region[1]}&lon={region[2]}&appid={API_2_5}&units=metric")
             forecast = json.loads(response.text)["list"]
@@ -144,12 +154,10 @@ class WeatherCommands(Group):
                 day_icon = day_icons[description]
                 time = weather_data["dt_txt"]
 
+                temp = weather_data["main"]["temp"]
                 if temp_standard and temp_standard.name == self.temp_standard[1].name:
-                    temp = weather_data["main"]["temp"] * 5.0 / 9 + 32
-                    result += f"[{time}]  {day_icon} {temp:.2f}℉  - {description}\n"
-                else:
-                    temp = weather_data["main"]["temp"]
-                    result += f"[{time}]  {day_icon} {temp:.2f}℃  - {description}\n"
+                    temp = temp * 5.0 / 9 + 32
+                result += f"[{time}]  {day_icon} {temp:.2f}{self.temp_icons[temp_standard.name]}  - {description}\n"
             await interaction.response.send_message(result)
         except requests.exceptions.HTTPError:
             await interaction.response.send_message(f"not found region {region}")

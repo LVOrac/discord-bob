@@ -24,7 +24,7 @@ class TodoCommands(Group):
         Choice(name="Once", value="once"),
     ]
 
-    def set_todo_default(self, interaction: Interaction):
+    def set_todo_default(self, interaction: Interaction) -> None:
         todo_path: str = os.path.join(str(interaction.user.id), "todolist.json")
         with open(todo_path, 'w') as f:
             f.write(f"[]")
@@ -37,7 +37,7 @@ class TodoCommands(Group):
         with open(todo_path, 'w') as f:
             f.write(json.dumps(todo))
 
-    def update_lifetime(self, interaction: Interaction, todo):
+    def update_lifetime(self, interaction: Interaction, todo) -> None:
         if not update_today_is_today(interaction):
             return
 
