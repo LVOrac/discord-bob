@@ -269,6 +269,7 @@ Commands: add show set del target
         await interaction.response.send_message("todo - add a new task " + name)
 
     @command(name="show", description="show task")
+    @describe(target="target list")
     @choices(lifetime=lifetimes)
     async def show(self, interaction: Interaction, lifetime: Optional[Choice[str]], target: Optional[str]) -> None:
         if msg := user_initialized(interaction):
