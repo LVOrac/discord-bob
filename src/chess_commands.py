@@ -12,6 +12,11 @@ from chess.engine import SimpleEngine, Limit
 from chess import svg
 from cairosvg import svg2png
 
+from dotenv import load_dotenv
+
+load_dotenv()
+STOCKFISH: str = str(os.getenv("STOCKFISH"))
+
 def save_stockfish_config(interaction: Interaction, level: int, depth: int, response_time: float) -> None:
     path: str = os.path.join(str(interaction.user.id), "stockfish_config.json")
     with open(path, 'w') as f:
@@ -50,7 +55,7 @@ def save_board_image(interaction: Interaction, board, flipped=False) -> None:
         svg2png(bytestring=svg_image.encode('utf-8'), write_to=f, dpi=300)
 
 def AI_move(board: chess.Board, config) -> chess.Move | None:
-    engine = SimpleEngine.popen_uci("../lib/stockfish")
+    engine = SimpleEngine.popen_uci(STOCKFISH)
     engine.configure({"Skill Level": config[0]})
     best_move = engine.play(board, Limit(depth=config[1], time=config[2])).move
     engine.close()
