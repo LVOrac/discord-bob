@@ -1,1 +1,1 @@
-SET STOCKFISH=../lib/stockfish && python src/main.py
+@SET STOCKFISH=C:\stockfish\stockfish && python src\main.py
