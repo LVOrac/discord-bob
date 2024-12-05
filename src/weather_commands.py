@@ -21,6 +21,7 @@ day_icons = {
         "thunderstorm": "⛈",
         "snow": "❄️",
         "mist": "🌫️",
+        "haze": "🌫️",
 }
 
 class WeatherCommands(Group):
