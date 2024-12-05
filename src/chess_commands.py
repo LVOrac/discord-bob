@@ -231,5 +231,5 @@ class ChessCommands(Group):
                 black *= rtotal
 
                 blocks = 24
-                result += format(f"{top["uci"]:^3} ⠀{games:>3}⠀ [{'█' * int(blocks * white)}{'▒' * int(blocks * draws)}{'░' * int(blocks * black)}]\n", style=Style.BulletedList)
+                result += format(f"{top['uci']:^3} ⠀{games:>3}⠀ [{'█' * int(blocks * white)}{'▒' * int(blocks * draws)}{'░' * int(blocks * black)}]\n", style=Style.BulletedList)
             await interaction.response.send_message(result)

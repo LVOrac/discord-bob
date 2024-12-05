@@ -52,7 +52,7 @@ class WeatherCommands(Group):
 
         path: str = os.path.join(str(interaction.user.id), "weather_today.json")
         with open(path, 'w') as f:
-            f.write(f"{{\"name\":\"{weather_data["name"]}\",\"temp\":{temp},\"temp_max\":{temp_max},\"temp_min\":{temp_min},\"description\":\"{description}\",\"icon\":\"{day_icon}\"}}")
+            f.write(f"{{\"name\":\"{weather_data['name']}\",\"temp\":{temp},\"temp_max\":{temp_max},\"temp_min\":{temp_min},\"description\":\"{description}\",\"icon\":\"{day_icon}\"}}")
 
     @command(name="help", description="show weather's functions")
     async def help(self, interaction: Interaction) -> None:
@@ -138,7 +138,7 @@ class WeatherCommands(Group):
             today["temp_max"] = today["temp_max"] * 5.0 / 9 + 32
             today["temp_min"] = today["temp_min"] * 5.0 / 9 + 32
         icon = self.temp_icons[temp_standard.name]
-        await interaction.response.send_message(f"My Location\n{today["name"]}\n{today["temp"]:.2f}{icon}  {today["icon"]} - {today["description"]}\n{today["temp_min"]:.2f}{icon} - {today["temp_max"]:.2f}{icon}")
+        await interaction.response.send_message(f"My Location\n{today['name']}\n{today['temp']:.2f}{icon}  {today['icon']} - {today['description']}\n{today['temp_min']:.2f}{icon} - {today['temp_max']:.2f}{icon}")
 
     @command(name="forecast", description="forecast")
     @describe(temp_standard="Temp Standard")

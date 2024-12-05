@@ -215,7 +215,7 @@ Commands: add show set del target
             await interaction.response.send_message("todo - here is no list. You can use /todo list add")
             return
 
-        await interaction.response.send_message(f"todo - current target is {"not been setted" if listname[0] == '' else listname[0]}")
+        await interaction.response.send_message(f"todo - current target is { 'not been setted' if listname[0] == '' else listname[0] }")
 
     @command(name="swtich", description="switch to another list")
     @describe(iden="task id / name")
@@ -229,7 +229,7 @@ Commands: add show set del target
             oldname = listname[0]
             listname[0] = listname[i]
             update_listname(interaction, listname)
-            return f"todo - switch from {"'current'" if oldname == '' else oldname} to {listname[0]}"
+            return f"todo - switch from {'current' if oldname == '' else oldname} to {listname[0]}"
 
         await interaction.response.send_message(self.ListCommands().find_iden_then(do, listname, iden))
 
@@ -418,7 +418,7 @@ Commands: add show set del target
                 await interaction.response.send_message(msg)
                 return
 
-        response = f"todo - set {iden} {"" if not status else status.name} {"" if not lifetime else lifetime.name}"
+        response = f"todo - set {iden} {'' if not status else status.name} {'' if not lifetime else lifetime.name}"
         await interaction.response.send_message(response)
 
     @command(name="del", description="del a task")
