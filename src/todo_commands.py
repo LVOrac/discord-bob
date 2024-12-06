@@ -8,7 +8,7 @@ from user import load_json, user_initialized, update_today_is_today
 
 status = [
     Choice(name="Done", value="Done"),
-    Choice(name="In Progress", value="In progress"),
+    Choice(name=f"In Progress", value="In progress"),
     Choice(name="Missing", value="Missing"),
 ]
 
@@ -142,7 +142,7 @@ class TodoCommands(Group):
             return f"todo - not find iden {iden}"
 
         @command(name="del", description="delete a list")
-        @describe(iden="task id / name")
+        @describe(iden="list id / name")
         async def delete(self, interaction: Interaction, iden: str) -> None:
             if msg := user_initialized(interaction):
                 await interaction.response.send_message(msg)
@@ -166,7 +166,7 @@ class TodoCommands(Group):
             await interaction.response.send_message(self.find_iden_then(do, listname, iden))
 
         @command(name="rename", description="rename a list")
-        @describe(iden="task id / name")
+        @describe(iden="list id / name")
         @describe(name="cannot be a number")
         async def rename(self, interaction: Interaction, iden: str, name: str) -> None:
             if msg := user_initialized(interaction):
@@ -202,11 +202,30 @@ class TodoCommands(Group):
 
     @command(name="help", description="show todo's functions")
     async def help(self, interaction: Interaction) -> None:
-        help = """Usage:
+        help = """### Usage:
         /todo <Commands> [settings ...]
-Commands: add show set del target
-        """
-        await interaction.response.send_message(format(help, style=Style.Bold))
+### Commands:
+  - add <name> [liftime] - add task to target list
+    - <lifetime> - Daily, Once
+  - show - show tasks in the target list
+  - set <iden> <status> | <lifetime> - set task status
+    - <iden> - task id / name
+    - <status> - Done, In Progress, Missing
+    - <lifetime> - Daily, Once
+  - del <iden> - delete a task in the target list
+  - target - show the current target list
+  - switch <iden> - switch from current target list to list <iden>
+    - <iden> - list id / name
+  - list add <name> - add a list
+    - <name> - cannot be a numebr
+  - list show - show tasks
+  - list del <iden> - delete a list
+    - <iden> - list id / name
+  - list rename <iden> <name> - rename a list
+    - <iden> - list id / name
+    - <name> cannot be a number
+"""
+        await interaction.response.send_message(help)
 
     @command(name="target", description="show target list")
     async def target(self, interaction: Interaction) -> None:
@@ -217,7 +236,7 @@ Commands: add show set del target
 
         await interaction.response.send_message(f"todo - current target is { 'not been setted' if listname[0] == '' else listname[0] }")
 
-    @command(name="swtich", description="switch to another list")
+    @command(name="switch", description="switch to another list")
     @describe(iden="task id / name")
     async def switch(self, interaction: Interaction, iden: str) -> None:
         listname = read_listname(interaction)

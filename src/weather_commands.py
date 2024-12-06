@@ -60,37 +60,42 @@ class WeatherCommands(Group):
         help = """### Usage:
         /weather <Commands> [settings ...]
 ### Commands:
-    - region <region name> - Change weather's region
-      - e.g. cuperino, CUPERTINO, SAN jose, ...
+    - region <name> - Change weather's region
+      - <ame> - regioin name
+      - e.g. cuperino, CUPERTINO, SAN jose, ...; default is Cupertino
     - today [temp standard] - Display today's weather
-      - temp standard - Celsius, Fahrenheit
+      - <temp standard> - Celsius, Fahrenheit; default is Celsius
     - forecast [temp standard] - Display forecast
-      - temp standard - Celsius, Fahrenheit
+      - <temp standard> - Celsius, Fahrenheit; default is Celsius
 """
         await interaction.response.send_message(help)
 
     @command(name="region", description="change region")
-    @describe(region="region name")
-    async def region(self, interaction: Interaction, region: str) -> None:
+    @describe(name="region name - cannot be a number")
+    async def region(self, interaction: Interaction, name: str) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
 
+        if name.isdigit():
+            await interaction.response.send_message(f"weather - region name cannot be a number '{name}'")
+            return
+
         reg = self.load_region(interaction)
-        if reg and reg[0].lower() == region.lower():
-            await interaction.response.send_message(f"weahter - {region} has been seted")
+        if reg and reg[0].lower() == name.lower():
+            await interaction.response.send_message(f"weahter - {name} has been seted")
             return
 
         try:
-            response = requests.get(f"http://api.openweathermap.org/geo/1.0/direct?q={region}&limit={1}&appid={API_2_5}")
+            response = requests.get(f"http://api.openweathermap.org/geo/1.0/direct?q={name}&limit={1}&appid={API_2_5}")
             response.raise_for_status()
             cor = json.loads(response.text)[0]
-            self.update_region(interaction, region, cor["lat"], cor["lon"])
+            self.update_region(interaction, name, cor["lat"], cor["lon"])
             reg = self.load_region(interaction)
             self.update_weather_today(interaction, reg)
-            await interaction.response.send_message(f"weahter - region changed to {region}")
+            await interaction.response.send_message(f"weahter - region changed to {name}")
         except requests.exceptions.HTTPError:
-            await interaction.response.send_message(f"not found region {region}")
+            await interaction.response.send_message(f"not found region {name}")
 
     temp_standard = [
             Choice(name="Celsius", value="celsius"),

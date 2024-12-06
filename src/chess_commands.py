@@ -70,17 +70,17 @@ class ChessCommands(Group):
         help = """### Usage:
         /chess <Commands> [settings ...]
 ### Commands:
-    - new [start] [level] [depth] [response_time] - start a new chess game
-      - start - White, Black
-      - level - Integer
-      - depth - Integer
-      - reponse_time - Float
-    - move <legal_move> - move pieces
-      - e.g. e4e5, e5, g1f3, ...
-    - show - show current chess board 
-    - fen - show current board fen
-    - analyze [moves] - analyze the current game
-      - moves - Integer
+  - new [start] [level] [depth] [response_time] - start a new chess game
+    - <start> - White, Black; default is White
+    - <level> - Integer; default is 0
+    - <depth> - Integer; default is 1
+    - <reponse_time> - Float; default is 0.1
+  - move <legal_move> - move pieces
+    - e.g. e4e5, e5, g1f3, ...
+  - show - show current chess board 
+  - fen - show current board fen
+  - analyze [moves] - analyze the current game
+    - <moves> - Integer
 """
         await interaction.response.send_message(help)
 
