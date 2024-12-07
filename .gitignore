@@ -1,5 +1,2 @@
-.env
 users/**
 src/__pycache__
-lib/**
-ficsgamesdb.pgn
