@@ -1,16 +1,3 @@
-"""
-make a command to request the score in deanza
-todo:
-    adddir [dir]
-    rmdir [dir]
-    chdir [section]
-    add [todo]
-    rm  [todo]
-
-play:
-    music [music name]
-"""
-
 import os
 
 folder_path: str = os.path.join("users")
@@ -44,6 +31,7 @@ tree.add_command(Command(name="help", description="help", callback=help))
 
 @client.event
 async def on_ready() -> None:
+    os.makedirs("users", exist_ok=True)
     await tree.sync(guild=None) # you may need to restart discord if there is a new command which needs to be updated.
     print(f"{client.user} is ready")
 
