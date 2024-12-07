@@ -40,6 +40,16 @@ def update_today_is_today(interaction: Interaction) -> bool:
             f.write(str(datetime.now().date()))
     return ret
 
+async def help(interaction: Interaction) -> None:
+    help = """### Usage:
+        /<Commands> [settings ...]
+### Commands:
+    - todo
+    - chess
+    - weather
+    """
+    await interaction.response.send_message(help)
+
 async def init(interaction: Interaction) -> None:
     path = initialized_user(interaction)
     if path == None:
