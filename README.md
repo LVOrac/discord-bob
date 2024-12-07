@@ -1,9 +1,9 @@
-### To install dependency
+# To install dependency
 ```
 pip install python-dotenv discord.py chess cairosvg
 ```
-### How to run
-#### Ubuntu
+# How to run
+## Ubuntu
 For installing stockfish
 ```
 sudo apt install stockfish
@@ -14,11 +14,11 @@ chmod +x run.sh
 ./run.sh
 ```
 
-#### Windows
+## Windows
 You need to download stockfish https://stockfishchess.org/download/
 Then set the executable path of stockfish in run.bat like this for example
 ```
-@SET STOCKFISH=C:/users/user/Downloads/stockfish-windows-x86-64-avx2 && python src/main.py
+@SET STOCKFISH=C:\Users\user\Downloads\stockfish\stockfish-windows-x86-64-avx2 && python src\main.py
 ```
 Then you can run it by
 ```
