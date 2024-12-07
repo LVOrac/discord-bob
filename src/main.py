@@ -1,6 +1,5 @@
 import os
 
-os.makedirs("users", exist_ok=True)
 folder_path: str = os.path.join("users")
 os.chdir(folder_path)
 
