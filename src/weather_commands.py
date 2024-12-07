@@ -125,7 +125,7 @@ class WeatherCommands(Group):
             return
 
         path: str = os.path.join(str(interaction.user.id), "weather_today.json")
-        if not os.path.exists(path) or update_today_is_today(interaction):
+        if not os.path.exists(path) or update_today_is_today():
             try:
                 self.update_weather_today(interaction, region)
             except requests.exceptions.HTTPError:

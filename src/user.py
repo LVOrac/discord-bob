@@ -27,7 +27,7 @@ def init_user(interaction: Interaction) -> None:
     user_folder = str(interaction.user.id)
     os.makedirs(user_folder, exist_ok=True)
 
-def update_today_is_today(interaction: Interaction) -> bool:
+def update_today_is_today() -> bool:
     day_path: str = os.path.join("today")
     ret = False
     with open(day_path, 'r') as f:

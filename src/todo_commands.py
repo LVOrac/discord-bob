@@ -43,7 +43,7 @@ def update_todo(interaction: Interaction, todo, name: str) -> None:
         f.write(json.dumps(todo))
 
 def update_lifetime(interaction: Interaction, todo, name: str) -> None:
-    if not update_today_is_today(interaction):
+    if not update_today_is_today():
         return
 
     for i in range(len(todo) - 1, -1, -1):
