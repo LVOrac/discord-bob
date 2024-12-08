@@ -2,10 +2,9 @@
 ```
 pip install python-dotenv discord.py chess cairosvg
 
+```
 # API Key
 You need a free plan openweathermap api key and a discord bot api key to run the bot
-
-```
 # How to run
 ### Ubuntu
 For installing stockfish
