@@ -319,7 +319,7 @@ class TodoCommands(Group):
                     else:
                         result += format(f"[{i:>2}] - {todo[i][0]} {status_char[todo[i][2]]}\n", style=Style.BulletedList)
             else:
-                result = "here is no things to do :)"
+                result += "[Empty]\n"
         await interaction.response.send_message(result)
 
 
@@ -343,8 +343,11 @@ class TodoCommands(Group):
         if target == None:
             listname = listname[0]
         elif target.isdigit():
-           await interaction.response.send_message(f"todo - target cannot be a number")
-           return
+            id = int(target)
+            if id <= 0 or id >= len(listname):
+               await interaction.response.send_message(f"todo - not found target id {id}")
+               return
+            listname = listname[id]
         elif target in listname:
             listname = target
         else:
@@ -384,7 +387,7 @@ class TodoCommands(Group):
         for i in range(list_len):
             if iden == todo[i][0]:
                 return do(todo, i)
-        return (True, "todo - not found iden {iden}")
+        return (True, f"todo - not found iden {iden}")
 
     @command(name="set", description="set task status")
     @describe(iden="task id / name")
