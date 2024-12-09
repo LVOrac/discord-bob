@@ -17,6 +17,8 @@ day_icons = {
         "scattered clouds": "☁",
         "broken clouds": "🌥️",
         "slower rain": "🌦️",
+        "light rain": "🌦️",
+        "moderate rain": "🌦️",
         "rain": "🌧️",
         "thunderstorm": "⛈",
         "snow": "❄️",
@@ -87,7 +89,7 @@ class WeatherCommands(Group):
             return
 
         try:
-            response = requests.get(f"http://api.openweathermap.org/geo/1.0/direct?q={name}&limit={1}&appid={API_2_5}")
+            response = requests.get(f"http://api.openweathermap.org/geo/1.0/direct?q={name}&limit={2}&appid={API_2_5}")
             response.raise_for_status()
             cor = json.loads(response.text)[0]
             self.update_region(interaction, name, cor["lat"], cor["lon"])

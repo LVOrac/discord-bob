@@ -287,9 +287,22 @@ class TodoCommands(Group):
         update_todo(interaction, todo, target)
         await interaction.response.send_message("todo - add a new task " + name)
 
+    def show_tasks(self, interaction: Interaction, todo, list_name: str, fliter):
+        result: str = ""
+        result += f"### {list_name} Tasks:\n"
+        if len(todo) != 0:
+            update_lifetime(interaction, todo, list_name)
+            for i in range(len(todo)):
+                if fliter(i):
+                    result += format(f"[{i:>2}] - {todo[i][0]} {status_char[todo[i][2]]}\n", style=Style.BulletedList)
+        else:
+            result += "[Empty]\n"
+        return result
+
     @command(name="shwall", description="show all tasks in all lists")
     @choices(lifetime=lifetimes)
-    async def shwall(self, interaction: Interaction, lifetime: Optional[Choice[str]]) -> None:
+    @choices(status=status)
+    async def shwall(self, interaction: Interaction, status: Optional[Choice[str]], lifetime: Optional[Choice[str]]) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
@@ -309,24 +322,24 @@ class TodoCommands(Group):
             if todo == None:
                 await interaction.response.send_message(f"todo - list {listname[i]} is missing")
                 return
-            result += f"### {listname[i]} Tasks:\n"
-            if len(todo) != 0:
-                update_lifetime(interaction, todo, listname[i])
-                for i in range(len(todo)):
-                    if lifetime:
-                        if lifetime.name == todo[i][1]:
-                            result += format(f"[{i:>2}] - {todo[i][0]} {status_char[todo[i][2]]}\n", style=Style.BulletedList)
-                    else:
-                        result += format(f"[{i:>2}] - {todo[i][0]} {status_char[todo[i][2]]}\n", style=Style.BulletedList)
-            else:
-                result += "[Empty]\n"
+            def fliter(i: int):
+                if lifetime and status:
+                    return lifetime.name == todo[i][1] and status.name == todo[i][2]
+                elif lifetime:
+                    return lifetime.name == todo[i][1]
+                elif status:
+                    return status.name == todo[i][2]
+                return True
+            result += self.show_tasks(interaction, todo, listname[i], fliter)
+
         await interaction.response.send_message(result)
 
 
     @command(name="show", description="show task")
     @describe(target="target list iden id / name")
     @choices(lifetime=lifetimes)
-    async def show(self, interaction: Interaction, lifetime: Optional[Choice[str]], target: Optional[str]) -> None:
+    @choices(status=status)
+    async def show(self, interaction: Interaction, status: Optional[Choice[str]], lifetime: Optional[Choice[str]], target: Optional[str]) -> None:
         if msg := user_initialized(interaction):
             await interaction.response.send_message(msg)
             return
@@ -361,18 +374,16 @@ class TodoCommands(Group):
             await interaction.response.send_message(f"todo - target {target_list} is missing")
             return
 
-        result: str = f"### {listname} Tasks:\n"
-        if len(todo) != 0:
-            update_lifetime(interaction, todo, target_list)
-            for i in range(len(todo)):
-                if lifetime:
-                    if lifetime.name == todo[i][1]:
-                        result += format(f"[{i:>2}] - {todo[i][0]} {status_char[todo[i][2]]}\n", style=Style.BulletedList)
-                else:
-                    result += format(f"[{i:>2}] - {todo[i][0]} {status_char[todo[i][2]]}\n", style=Style.BulletedList)
-        else:
-            result = "here is no things to do :)"
-        await interaction.response.send_message(result)
+        def fliter(i: int):
+            if lifetime and status:
+                return lifetime.name == todo[i][1] and status.name == todo[i][2]
+            elif lifetime:
+                return lifetime.name == todo[i][1]
+            elif status:
+                return status.name == todo[i][2]
+            return True
+
+        await interaction.response.send_message(self.show_tasks(interaction, todo, listname, fliter))
 
     def find_task_then(self, todo, iden, do) -> Tuple[bool, str]:
         list_len = len(todo)
@@ -475,7 +486,7 @@ class TodoCommands(Group):
             await interaction.response.send_message(msg)
             return
 
-        await interaction.response.send_message(f"todo - not find name {iden}")
+        await interaction.response.send_message(f"todo - delete iden {iden}")
 
     @command(name="rename", description="del a task")
     @describe(iden="task id / name")
