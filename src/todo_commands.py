@@ -324,7 +324,7 @@ class TodoCommands(Group):
 
 
     @command(name="show", description="show task")
-    @describe(target="target list name - cannot be a number")
+    @describe(target="target list iden id / name")
     @choices(lifetime=lifetimes)
     async def show(self, interaction: Interaction, lifetime: Optional[Choice[str]], target: Optional[str]) -> None:
         if msg := user_initialized(interaction):
