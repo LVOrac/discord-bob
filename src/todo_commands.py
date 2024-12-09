@@ -206,7 +206,7 @@ class TodoCommands(Group):
         /todo <Commands> [settings ...]
 ### Commands:
   - add <name> [liftime] - add task to target list
-    - <lifetime> - Daily, Once
+    - [lifetime] - Daily, Once
   - show - show tasks in the target list
   - set <iden> <status> | <lifetime> - set task status
     - <iden> - task id / name
@@ -218,7 +218,7 @@ class TodoCommands(Group):
     - <iden> - list id / name
   - list add <name> - add a list
     - <name> - cannot be a numebr
-  - list show - show tasks
+  - list show - show lists
   - list del <iden> - delete a list
     - <iden> - list id / name
   - list rename <iden> <name> - rename a list
@@ -335,7 +335,7 @@ class TodoCommands(Group):
         await interaction.response.send_message(result)
 
 
-    @command(name="show", description="show task")
+    @command(name="show", description="show tasks")
     @describe(target="target list iden id / name")
     @choices(lifetime=lifetimes)
     @choices(status=status)

@@ -27,3 +27,5 @@ Then you can run it by
 ```
 run.bat
 ```
+# Initialize
+You need to init your docs by using /init in the bot.
